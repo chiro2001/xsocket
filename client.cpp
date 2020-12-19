@@ -17,9 +17,13 @@ int main() {
   memset(&serv_addr, 0, sizeof(serv_addr));  //每个字节都用0填充
   serv_addr.sin_family = AF_INET;            //使用IPv4地址
   serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  //具体的IP地址
-  serv_addr.sin_port = htons(14514);                   //端口
+  serv_addr.sin_port = htons(8001);                   //端口
   // serv_addr.sin_port = htons(1234);                    //端口
-  connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+  int conn = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+  if (conn < 0) {
+    std:: cout << "Cannot create connection!" << std::endl;
+    return 0;
+  }
 
   // 给服务器发送数据
   std::string str =
@@ -29,7 +33,7 @@ int main() {
   \"code\": 0,\n\
   \"data\": \n\
   {\"hd\": 1}\n\
-}";
+exit";
   write(sock, str.c_str(), str.length());
   //读取服务器传回的数据
   char buffer[4096];

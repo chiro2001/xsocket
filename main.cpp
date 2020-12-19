@@ -1,5 +1,5 @@
 #include <iostream>
-// #include <mySocket.h>
+// #include <mysocket.h>
 #include <glog/logging.h>
 
 #include "./mysocket/includes/mysocket.h"
@@ -11,15 +11,67 @@ void OnInit(const char* cmd) {
   google::InitGoogleLogging(cmd);
 }
 
+// 放在全局是因为让匿名函数好操作
+// 当然可以放在局部
+MyServer* server;
+MyClient* client;
+
+void server_loop() {
+  // 建立MyServer实例，直接用默认参数好了
+  server = new MyServer();
+  server->onmessage = [](Json::Value message) {
+    LOG(INFO) << "Server got: " << message;
+    // 复读
+    server->send(message);
+  };
+  while (true) {
+    try {
+      server->start();
+      LOG(INFO) << "Server started";
+    } catch (MySocket::ExceptionCreateConnect) {
+      sleep(1);
+      continue;
+    }
+    break;
+  }
+  int ret = server->future_mainloop.get();
+  LOG(INFO) << "Got result: " << ret;
+}
+
+void client_loop() {
+  // 同样建立实例
+  sleep(1);
+  client = new MyClient();
+  // Client目前还是一发一收状态
+  client->onmessage = [](Json::Value message) {
+    LOG(INFO) << "Cilent got: " << message;
+  };
+  while (true) {
+    try {
+      client->start();
+      LOG(INFO) << "Client started";
+    } catch (MySocket::ExceptionCreateConnect) {
+      sleep(1);
+      continue;
+    }
+    break;
+  }
+  Json::Value val = message_parser("{\"value\": 1}");
+  int cnt = 1;
+  while (true) {
+    val["value"] = cnt++;
+    client->send(val);
+    LOG(INFO) << "Cilent sent: " << val;
+    sleep(2);
+  }
+}
+
 int main(int argc, char** argv) {
   OnInit(argv[0]);
   LOG(INFO) << "This is socket test main module!";
-  // 建立mySocket实例，直接用默认参数好了
-  MyServer* server = new MyServer();
-  server->onmessage = [](Json::Value message){
-    std::cout << message << std::endl;
-  };
-  server->start();
-  int ret = server->future_mainloop.get();
+  std::future<void> future_server = std::async(server_loop);
+  std::future<void> future_client = std::async(client_loop);
+  future_server.get();
+  future_client.get();
+  return 0;
 }
-

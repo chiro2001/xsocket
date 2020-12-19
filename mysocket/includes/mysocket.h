@@ -1,5 +1,6 @@
 #pragma once
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <glog/logging.h>
 #include <json/json.h>
 #include <netinet/in.h>
@@ -9,15 +10,22 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <future>
-#include <string>
 #include <exception>
+#include <future>
+#include <iostream>
+#include <string>
 
 #define MY_SOCKET_BUFSIZE (1 << 16)
-#define CALL_IF_EXIST(x) if (x) {x();}
-#define CALL_IF_EXIST_A(x, y) if (x) {x(y);}
+#define CALL_IF_EXIST(x) \
+  if (x) {               \
+    x();                 \
+  }
+#define CALL_IF_EXIST_A(x, y) \
+  if (x) {                    \
+    x(y);                     \
+  }
 #define MY_SOCKET_DEF_HOST "127.0.0.1"
-#define MY_SOCKET_DEF_PORT 14514
+#define MY_SOCKET_DEF_PORT 8001
 
 class MySocket {
  private:
@@ -53,7 +61,7 @@ class MySocket {
   // 在数据发送和接收端检查、修改一下数据
   void (*onmessage)(Json::Value) = NULL;
   void (*onsend)(Json::Value) = NULL;
-  // send，Server和Client实现方法不一样
+  // send，Server和Client实现方法一样
   void send(Json::Value);
 
   std::string to_string() {
@@ -72,6 +80,7 @@ class MySocket {
   }
   MySocket(std::string ip = MY_SOCKET_DEF_HOST, int port = MY_SOCKET_DEF_PORT) {
     this->ip = ip, this->port = port;
+    config_addr();
   }
   ~MySocket() {
     // 关闭连接
@@ -79,6 +88,7 @@ class MySocket {
   }
 
   class ExceptionParseJson : public std::exception {};
+  class ExceptionCreateConnect : public std::exception {};
 };
 
 class MyServer : public MySocket {
@@ -90,10 +100,12 @@ class MyServer : public MySocket {
 
   MyServer* start();
   void stop();
-  void send(Json::Value);
+  // void send(Json::Value);
 };
 class MyClient : public MySocket {
  public:
   MyClient* start();
-  void send(Json::Value);
+  // void send(Json::Value);
 };
+
+Json::Value message_parser(std::string src);
