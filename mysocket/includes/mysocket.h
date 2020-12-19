@@ -10,8 +10,14 @@
 #include <unistd.h>
 
 #include <future>
+#include <string>
+#include <exception>
 
 #define MY_SOCKET_BUFSIZE (1 << 16)
+#define CALL_IF_EXIST(x) if (x) {x();}
+#define CALL_IF_EXIST_A(x, y) if (x) {x(y);}
+#define MY_SOCKET_DEF_HOST "127.0.0.1"
+#define MY_SOCKET_DEF_PORT 14514
 
 class MySocket {
  private:
@@ -43,8 +49,9 @@ class MySocket {
   // 回调部分
   void (*onopen)(void) = NULL;
   void (*onerror)(void) = NULL;
+  void (*onclienterror)(void) = NULL;
   // 在数据发送和接收端检查、修改一下数据
-  void (*message)(Json::Value) = NULL;
+  void (*onmessage)(Json::Value) = NULL;
   void (*onsend)(Json::Value) = NULL;
   // send，Server和Client实现方法不一样
   void send(Json::Value);
@@ -54,16 +61,24 @@ class MySocket {
   }
 
   void do_close() {
-    if (this->sock_client > 0) close(this->sock_client);
-    if (this->sock_server > 0) close(this->sock_server);
+    if (this->sock_client > 0) {
+      close(this->sock_client);
+      this->sock_client = -1;
+    };
+    if (this->sock_server > 0) {
+      close(this->sock_server);
+      this->sock_server = -1;
+    }
   }
-  MySocket(std::string ip = "127.0.0.1", int port = 14514) {
+  MySocket(std::string ip = MY_SOCKET_DEF_HOST, int port = MY_SOCKET_DEF_PORT) {
     this->ip = ip, this->port = port;
   }
   ~MySocket() {
     // 关闭连接
     this->do_close();
   }
+
+  class ExceptionParseJson : public std::exception {};
 };
 
 class MyServer : public MySocket {

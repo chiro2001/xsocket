@@ -15,6 +15,11 @@ int main(int argc, char** argv) {
   OnInit(argv[0]);
   LOG(INFO) << "This is socket test main module!";
   // 建立mySocket实例，直接用默认参数好了
-  MyServer* server = (new MyServer())->start();
+  MyServer* server = new MyServer();
+  server->onmessage = [](Json::Value message){
+    std::cout << message << std::endl;
+  };
+  server->start();
+  int ret = server->future_mainloop.get();
 }
 

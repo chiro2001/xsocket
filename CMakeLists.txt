@@ -12,7 +12,7 @@ find_package(glog REQUIRED)
 #Src
 file(GLOB_RECURSE sourcefiles 
 # "others/**/*.h" "others/**/*.cpp"
-"others/lib_json/*.h" "others/lib_json/*.cpp"
+"others/includes/lib_json/*.h" "others/src/lib_json/*.cpp"
 "mysocket/includes/*.h" "mysocket/src/*.cpp"
 # "energy/**/*.h" "energy/**/*.cpp" 
 # "net/**/*.cpp" "net/**/*.h" 
