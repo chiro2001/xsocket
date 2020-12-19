@@ -33,7 +33,7 @@ int main() {
   write(sock, str.c_str(), str.length());
   //读取服务器传回的数据
   char buffer[4096];
-  read(sock, buffer, sizeof(buffer) - 1);
+  read(sock, buffer, sizeof(buffer));
 
   printf("Message form server: %s\n", buffer);
 
