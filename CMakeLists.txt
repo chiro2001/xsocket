@@ -5,7 +5,9 @@ include(CTest)
 enable_testing()
 
 add_executable(socket-communication main.cpp)
-add_executable(socket-test test.cpp)
+# add_executable(socket-test test.cpp)
+add_executable(test-cilent client.cpp)
+add_executable(test-server server.cpp)
 # add_compile_options(-lws2_32)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
