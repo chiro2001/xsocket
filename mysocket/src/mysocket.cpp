@@ -80,7 +80,7 @@ int mainloop(MyServer *ms) {
     }
     // 接收信息
     recv_n = recv(ms->sock_client, buf, MY_SOCKET_BUFSIZE, 0);
-    if (recv_n <= 0) {
+    if (recv_n < 0) {
       LOG(ERROR) << "MyServer: Can not receive data from client";
       CALL_IF_EXIST(ms->onclienterror);
       continue;
@@ -96,8 +96,10 @@ int mainloop(MyServer *ms) {
       continue;
     }
     CALL_IF_EXIST_A(ms->onmessage, root);
+    close(ms->sock_client);
   }
   ms->stop();
+  return 0;
 }
 
 MyServer *MyServer::start() {
@@ -151,6 +153,7 @@ void MySocket::send(Json::Value root) {
 MyClient *MyClient::start() {
   // 创建套接字
   this->sock_client = socket(AF_INET, SOCK_STREAM, 0);
+  // LOG(INFO) << "Client got socket: " << this->sock_client;
   // 直接请求连接
   int conn = connect(this->sock_client, (struct sockaddr *)&this->addr,
                      sizeof(this->addr));
@@ -161,4 +164,34 @@ MyClient *MyClient::start() {
   }
   CALL_IF_EXIST(this->onopen);
   return this;
+}
+
+void MyClient::recv() {  // 输入缓冲区
+  char *buf = (char *)malloc(sizeof(char) * MY_SOCKET_BUFSIZE);
+  // 接收到的字节数
+  int recv_n = 0;
+  if (!buf) {
+    LOG(ERROR) << "MyClient: Can not malloc memory of "
+               << std::to_string(MY_SOCKET_BUFSIZE);
+    CALL_IF_EXIST(this->onerror);
+    throw MySocket::ExceptionReading();
+  }
+  // 接收信息
+  recv_n = read(this->sock_client, buf, MY_SOCKET_BUFSIZE);
+  if (recv_n < 0) {
+    LOG(ERROR) << "MyClient: Can not receive data from server";
+    CALL_IF_EXIST(this->onclienterror);
+    throw MySocket::ExceptionReading();
+  }
+  // LOG(INFO) << "Got message: " << buf;
+  // 转换信息的格式到JSON
+  Json::Value root;
+  try {
+    root = message_parser(std::string(buf));
+  } catch (MyServer::ExceptionParseJson) {
+    LOG(ERROR) << "MyClient: Data from client format error";
+    CALL_IF_EXIST(this->onclienterror);
+    throw MySocket::ExceptionReading();
+  }
+  CALL_IF_EXIST_A(this->onmessage, root);
 }

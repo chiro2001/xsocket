@@ -89,6 +89,7 @@ class MySocket {
 
   class ExceptionParseJson : public std::exception {};
   class ExceptionCreateConnect : public std::exception {};
+  class ExceptionReading : public std::exception {};
 };
 
 class MyServer : public MySocket {
@@ -106,6 +107,7 @@ class MyClient : public MySocket {
  public:
   MyClient* start();
   // void send(Json::Value);
+  void recv();
 };
 
 Json::Value message_parser(std::string src);
