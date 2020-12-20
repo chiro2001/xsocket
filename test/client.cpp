@@ -33,7 +33,7 @@ int main() {
   \"code\": 0,\n\
   \"data\": \n\
   {\"hd\": 1}\n\
-exit";
+}";
   write(sock, str.c_str(), str.length());
   //读取服务器传回的数据
   char buffer[4096];

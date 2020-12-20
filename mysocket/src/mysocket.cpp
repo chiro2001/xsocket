@@ -1,5 +1,5 @@
-// #include <mySocket.h>
-#include "../includes/mysocket.h"
+#include <mysocket.h>
+// #include "../includes/mysocket.h"
 // mySocket.cpp
 // 实现两个功能：服务端和终端
 
@@ -68,7 +68,7 @@ int mainloop(MyServer *ms) {
     return -1;
   }
   while (ms->mark_running) {
-    LOG(INFO) << "while...";
+    // LOG(INFO) << "while...";
     if (ms->sock_client > 0) close(ms->sock_client);
     ms->sock_client =
         accept(ms->sock_server, (struct sockaddr *)&addr, &addr_size);
@@ -151,6 +151,7 @@ void MySocket::send(Json::Value root) {
 }
 
 MyClient *MyClient::start() {
+  if (this->sock_client > 0) return this;
   // 创建套接字
   this->sock_client = socket(AF_INET, SOCK_STREAM, 0);
   // LOG(INFO) << "Client got socket: " << this->sock_client;

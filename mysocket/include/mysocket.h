@@ -28,22 +28,6 @@
 #define MY_SOCKET_DEF_PORT 8001
 
 class MySocket {
- private:
-  void config_addr() {
-    if (this->ip.length() == 0 || this->port <= 0) {
-      LOG(ERROR) << "Unable to create socket address at " << this->to_string();
-      return;
-    }
-    // 创建套接字
-    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    // 设置地址
-    memset(&this->addr, 0, sizeof(this->addr));
-    this->addr.sin_family = AF_INET;
-    this->addr.sin_addr.s_addr = inet_addr(this->ip.c_str());
-    this->addr.sin_port = htons(port);
-    LOG(INFO) << "Created socket address at " << this->to_string();
-  }
-
  public:
   // 共用一个地址信息
   struct sockaddr_in addr;
@@ -67,6 +51,21 @@ class MySocket {
   std::string to_string() {
     return this->ip + ":" + std::to_string(this->port);
   }
+  void config_addr() {
+    if (this->ip.length() == 0 || this->port <= 0) {
+      LOG(ERROR) << "Unable to create socket address at " << this->to_string();
+      return;
+    }
+    // 创建套接字
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_UDP);
+    // int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    // 设置地址
+    memset(&this->addr, 0, sizeof(this->addr));
+    this->addr.sin_family = AF_INET;
+    this->addr.sin_addr.s_addr = inet_addr(this->ip.c_str());
+    this->addr.sin_port = htons(port);
+    LOG(INFO) << "Created socket address at " << this->to_string();
+  }
 
   void do_close() {
     if (this->sock_client > 0) {
@@ -78,10 +77,13 @@ class MySocket {
       this->sock_server = -1;
     }
   }
-  MySocket(std::string ip = MY_SOCKET_DEF_HOST, int port = MY_SOCKET_DEF_PORT) {
-    this->ip = ip, this->port = port;
-    config_addr();
-  }
+  // MySocket(std::string ip_, int port_) {
+  //   this->ip = ip_, this->port = port_;
+  //   config_addr();
+  // }
+  // MySocket(const char ip[], int port) {
+  //   MySocket(std::string(ip), port);
+  // }
   ~MySocket() {
     // 关闭连接
     this->do_close();
@@ -99,12 +101,21 @@ class MyServer : public MySocket {
   bool mark_running = false;
   std::future<int> future_mainloop;
 
+  MyServer(std::string ip_, int port_) {
+    this->ip = ip_, this->port = port_;
+    config_addr();
+  }
   MyServer* start();
   void stop();
   // void send(Json::Value);
 };
 class MyClient : public MySocket {
  public:
+  MyClient(std::string ip_, int port_) {
+    this->ip = ip_, this->port = port_;
+    config_addr();
+  }
+
   MyClient* start();
   // void send(Json::Value);
   void recv();
