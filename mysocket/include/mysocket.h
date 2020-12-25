@@ -14,6 +14,7 @@
 #include <future>
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #define MY_SOCKET_BUFSIZE (1 << 16)
 #define CALL_IF_EXIST(x) \
@@ -111,8 +112,9 @@ class MyServer : public MySocket {
 };
 class MyClient : public MySocket {
  public:
-  MyClient(std::string ip_, int port_) {
-    this->ip = ip_, this->port = port_;
+  bool mode_async = true;
+  MyClient(std::string ip_, int port_, bool use_async = true) {
+    this->ip = ip_, this->port = port_, this->mode_async = use_async;
     config_addr();
   }
 

@@ -21,9 +21,20 @@
 }
 */
 Json::Value message_parser(std::string src) {
-  Json::Reader reader;
+  // Json::Reader reader;
+  Json::CharReaderBuilder rbuilder;
   Json::Value root;
-  if (!reader.parse(src, root)) throw MyServer::ExceptionParseJson();
+  // if (!reader.parse(src, root)) throw MyServer::ExceptionParseJson();
+  JSONCPP_STRING errs;
+  // 静态方法，因为stringstream的构造函数和析构函数很浪费CPU
+  static std::stringstream ss;
+  ss.clear();
+  ss << src;
+  bool ok = Json::parseFromStream(rbuilder, ss, &root, &errs);
+  if (!ok) {
+    LOG(ERROR) << errs;
+    throw MyServer::ExceptionParseJson();
+  }
   // std::cout << root["code"] << std::endl;
   return root;
 }
