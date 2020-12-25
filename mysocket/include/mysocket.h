@@ -113,12 +113,15 @@ class MyServer : public MySocket {
 class MyClient : public MySocket {
  public:
   bool mode_async = true;
+  bool mark_running = false;
+  std::future<int> future_recvloop;
   MyClient(std::string ip_, int port_, bool use_async = true) {
     this->ip = ip_, this->port = port_, this->mode_async = use_async;
     config_addr();
   }
 
   MyClient* start();
+  void stop();
   // void send(Json::Value);
   void recv();
 };

@@ -78,11 +78,12 @@ int mainloop(MyServer *ms) {
     CALL_IF_EXIST(ms->onerror);
     return -1;
   }
+  if (ms->sock_client > 0) close(ms->sock_client);
+  ms->sock_client =
+      accept(ms->sock_server, (struct sockaddr *)&addr, &addr_size);
+
   while (ms->mark_running) {
     // LOG(INFO) << "while...";
-    if (ms->sock_client > 0) close(ms->sock_client);
-    ms->sock_client =
-        accept(ms->sock_server, (struct sockaddr *)&addr, &addr_size);
     // 在这里出错是客户端的锅，咱们不背。
     if (ms->sock_client < 0) {
       LOG(ERROR) << "MyServer: Can not accept client connnecttion";
@@ -107,8 +108,8 @@ int mainloop(MyServer *ms) {
       continue;
     }
     CALL_IF_EXIST_A(ms->onmessage, root);
-    close(ms->sock_client);
   }
+  close(ms->sock_client);
   ms->stop();
   return 0;
 }
@@ -161,6 +162,28 @@ void MySocket::send(Json::Value root) {
   write(this->sock_client, result.c_str(), result.length());
 }
 
+// 会等待mainloop来调用
+void MyClient::stop() {
+  if (this->mark_running) {
+    this->mark_running = false;
+    return;
+  }
+  this->do_close();
+}
+
+// Client
+int recvloop(MyClient *mc) {
+  while (mc->mark_running) {
+    try {
+      mc->recv();
+    } catch (MySocket::ExceptionReading) {
+      return -1;
+    }
+  }
+  mc->stop();
+  return 0;
+}
+
 MyClient *MyClient::start() {
   if (this->sock_client > 0) return this;
   // 创建套接字
@@ -175,6 +198,11 @@ MyClient *MyClient::start() {
     throw MySocket::ExceptionCreateConnect();
   }
   CALL_IF_EXIST(this->onopen);
+  // 如果是异步状态就直接启动另一个线程
+  if (this->mode_async) {
+    this->mark_running = true;
+    this->future_recvloop = std::async(recvloop, this);
+  }
   return this;
 }
 
@@ -195,6 +223,7 @@ void MyClient::recv() {  // 输入缓冲区
     CALL_IF_EXIST(this->onclienterror);
     throw MySocket::ExceptionReading();
   }
+  if (recv_n == 0) return;
   // LOG(INFO) << "Got message: " << buf;
   // 转换信息的格式到JSON
   Json::Value root;

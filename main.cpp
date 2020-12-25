@@ -27,7 +27,8 @@ void server_loop(int port) {
   server->onmessage = [](Json::Value message) {
     // LOG(INFO) << "Server got: " << message;
     // 复读
-    server->send(message);
+    // server->send(message);
+    // LOG(INFO) << "Server got new message";
   };
   while (true) {
     try {
@@ -39,6 +40,15 @@ void server_loop(int port) {
     }
     break;
   }
+  std::future<void> fu = std::async([](){
+    while (true) {
+      int t = rand() % 3 + 1;
+      sleep(t);
+      Json::Value val;
+      val["message"] = std::string("I slept for ") + std::to_string(t) + std::string(" second(s)!");
+      server->send(val);
+    }
+  });
   int ret = server->future_mainloop.get();
   LOG(INFO) << "Got result: " << ret;
 }
@@ -50,43 +60,43 @@ void client_loop(int port) {
   // 同样建立实例
   sleep(1);
   client = new MyClient(std::string("127.0.0.1"), port);
-  // Client目前还是一发一收状态
+  // Client改成同步状态
   client->onmessage = [](Json::Value message) {
-    // LOG(INFO) << "Cilent got: " << message;
-    client->do_close();
-    client->start();
+    LOG(INFO) << "Cilent got: " << message;
   };
-  while (true) {
-    try {
-      client->start();
-      LOG(INFO) << "Client started";
-    } catch (MySocket::ExceptionCreateConnect) {
-      sleep(1);
-      continue;
-    }
-    break;
-  }
   Json::Value val = message_parser("{\"value\": 0}");
   while (true) {
+
+    while (client->sock_client < 0) {
+      try {
+        client->start();
+        LOG(INFO) << "Client started";
+      } catch (MySocket::ExceptionCreateConnect) {
+        LOG(WARNING) << "Cilent can not create connection, retrying";
+        sleep(1);
+        continue;
+      }
+      break;
+    }
+
     try {
-      val[(std::string("value") + std::to_string(cnt)).c_str()] = cnt++;
+      // val[(std::string("value") + std::to_string(cnt)).c_str()] = cnt++;
+      val["value"] = cnt++;
       client->send(val);
       // LOG(INFO) << "Cilent sent: " << val;
-      client->recv();
-      client->do_close();
-      client->start();
       usleep(10000);
-      // sleep(2);
+      // sleep(1);
     } catch (MySocket::ExceptionReading) {
       LOG(ERROR) << "Client meets exception reading";
       cnt_err++;
-      LOG(ERROR) << "request#" << cnt << "\terror rate: " << (double) cnt_err / cnt;
+      LOG(ERROR) << "request#" << cnt
+                 << "\terror rate: " << (double)cnt_err / cnt;
       // usleep(1000000);
-      usleep(10000);
-      client->do_close();
-      client->start();
+      // usleep(10000);
+      sleep(2);
       continue;
     } catch (MySocket::ExceptionCreateConnect) {
+      // Never reach here... Maybe
       sleep(1);
       continue;
     }
