@@ -81,4 +81,31 @@ int main() {
 }
 
 #else
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <glog/logging.h>
+#include <json/json.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+int main() {
+  // 测试：创建socket之后不连接直接关闭
+  // 创建套接字
+  struct sockaddr_in addr;
+  int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_UDP);
+  // int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  // 设置地址
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  addr.sin_port = htons(1234);
+  // bind(sock_server, (struct sockaddr *)&addr, sizeof(struct sockaddr));
+  close(sock);
+  puts("DONE");
+  // 测试结果：成功，可以关闭
+}
 #endif

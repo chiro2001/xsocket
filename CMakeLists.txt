@@ -25,7 +25,7 @@ file(GLOB_RECURSE sourcefiles
 # add_library(mysocket mysocket/src/mysocket.cpp)
 # add_executable(socket-communication main.cpp ${sourcefiles})
 add_executable(xsocket main.cpp ${sourcefiles})
-# add_executable(socket-test test.cpp)
+add_executable(socket-test test/test.cpp)
 # add_executable(test-cilent test/client.cpp)
 # add_executable(test-server server.cpp)
 

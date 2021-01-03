@@ -26,7 +26,7 @@ Json::Value message_parser(std::string src) {
   Json::Value root;
   // if (!reader.parse(src, root)) throw MyServer::ExceptionParseJson();
   JSONCPP_STRING errs;
-  // 静态方法，因为stringstream的构造函数和析构函数很浪费CPU
+  // 静态，因为stringstream的构造函数和析构函数很浪费CPU
   static std::stringstream ss;
   ss.clear();
   ss << src;
@@ -86,7 +86,7 @@ int mainloop(MyServer *ms) {
     // LOG(INFO) << "while...";
     // 在这里出错是客户端的锅，咱们不背。
     if (ms->sock_client < 0) {
-      LOG(ERROR) << "MyServer: Can not accept client connnecttion";
+      LOG(ERROR) << "MyServer: Can not accept client connnection";
       CALL_IF_EXIST(ms->onclienterror);
       continue;
     }
