@@ -6,8 +6,10 @@
 #include <ctime>
 #include <iostream>
 
-void server_loop(int port);
-void client_loop(int port);
+// std::future<void> server_loop(int port);
+// std::future<void> client_loop(int port);
+std::thread server_loop(int port);
+std::thread client_loop(int port);
 
 void on_init(const char *cmd) {
   FLAGS_alsologtostderr = 1;
@@ -19,11 +21,10 @@ int main(int argc, char **argv) {
   LOG(INFO) << "Hey my friend! Wish you happy to use XSocket!";
   srand(time(NULL));
   int port = rand() % 3000 + 5000;
-  std::future<void> future_server = std::async(server_loop, port);
-  usleep(1000000);
-  std::future<void> future_client = std::async(client_loop, port);
-  future_server.get();
-  future_client.get();
+  std::thread thread_server = server_loop(port);
+  usleep(100000);
+  std::thread thread_client = client_loop(port);
+  thread_server.join();
   return 0;
 }
 
@@ -32,8 +33,8 @@ void looper_server(unsigned int utime,
                    XSocketServerP2P<std::string> *arg) {
   int count = -1;
   while (count) {
-    timer(arg);
     usleep(utime);
+    timer(arg);
     if (count > 0) count--;
   }
 }
@@ -43,27 +44,41 @@ void looper_client(unsigned int utime,
                    XSocketClientP2P<std::string> *arg) {
   int count = -1;
   while (count) {
-    timer(arg);
     usleep(utime);
+    timer(arg);
     if (count > 0) count--;
   }
 }
 
 void server_sender(XSocketServerP2P<std::string> *self) {
-  self->send_data("DATA FROM SERVER!!!\n");
+  LOG(INFO) << ">";
+  try {
+    self->send_data("DATA FROM SERVER!!!\n");
+  } catch (XSocketExceptionWriting e) {
+    LOG(WARNING) << "Server: XSocketExceptionWriting " << e.what();
+  }
+  LOG(INFO) << "->";
 }
 void client_sender(XSocketClientP2P<std::string> *self) {
-  self->send_data("Data from Client...\n");
+  LOG(INFO) << "<";
+  try {
+    self->send_data("Data from Client...\n");
+  } catch (XSocketExceptionWriting e) {
+    LOG(WARNING) << "Client: XSocketExceptionWriting " << e.what();
+  }
+  LOG(INFO) << "<-";
 }
 
-void server_loop(int port) {
-  XSocketServerP2P<std::string> xss("120.0.0.1", port);
-  std::async(looper_server, 1000000, server_sender, &xss);
-  xss.server_loop_start().get();
+std::thread server_loop(int port) {
+  XSocketServerP2P<std::string> *xss =
+      new XSocketServerP2P<std::string>("127.0.0.1", port);
+  new std::thread(looper_server, 1000000, server_sender, xss);
+  return xss->server_loop_start();
 }
 
-void client_loop(int port) {
-  XSocketClientP2P<std::string> xsc("120.0.0.1", port);
-  std::async(looper_client, 100000, client_sender, &xsc);
-  xsc.client_loop_start().get();
+std::thread client_loop(int port) {
+  XSocketClientP2P<std::string> *xsc =
+      new XSocketClientP2P<std::string>("127.0.0.1", port);
+  new std::thread(looper_client, 100000, client_sender, xsc);
+  return xsc->client_loop_start();
 }
