@@ -114,7 +114,7 @@ class XSocketAddress {
     // 参数错误了
     if (this->ip.length() == 0 || this->port <= 0) return -1;
     this->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);  // TCP
-    // this->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);    // UDP
+    // this->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // UDP
     // 设置地址
     memset(&this->addr, 0, sizeof(this->addr));
     this->addr.sin_family = AF_INET;
@@ -201,6 +201,7 @@ class XSocketAddress {
   // 写入字符串
   void sock_write_string(std::string s) {
     for (uint8_t c : s) this->sock_write_byte(c);
+    this->sock_write_byte(0);
   }
 
   // 写入结束字符
@@ -282,13 +283,13 @@ class XEvents {
   std::queue<T>* data;
   XEvents(std::queue<T>* data_) : data(data_) {}
   // 记录函数指针，注意要强制转换调用。
-  std::map<std::string, std::vector<size_t>> callers;
+  std::map<std::string, std::vector<void*>> callers;
   void listener_add(std::string name,
                     void (*listener)(XSocketCallingMessage<T>)) {
     if (!listener) return;
     if (this->callers.find(name) == this->callers.end())
-      this->callers[name] = std::vector<size_t>();
-    this->callers[name].push_back(listener);
+      this->callers[name] = std::vector<void*>();
+    this->callers[name].push_back((void*)listener);
   }
   void listener_remove(std::string name,
                        void (*listener)(XSocketCallingMessage<T>)) {
@@ -303,8 +304,9 @@ class XEvents {
     if (this->callers.find(name) == this->callers.end()) return;
     for (auto ptr : this->callers[name]) {
       // 启动线程，然后...不管他。
-      std::future<void> f =
-          std::async((void (*)(XSocketCallingMessage<T>))ptr, message);
+      // std::future<void> f =
+      //     std::async((void (*)(XSocketCallingMessage<T>))ptr, message);
+      new std::thread((void (*)(XSocketCallingMessage<T>))ptr, message);
     }
   }
   // 空消息
@@ -406,7 +408,7 @@ class XSocketServerP2P : public XSocketServer<T> {
             self->data.push(data_str);
           } else {
           }
-          LOG(INFO) << "ServerP2P: got string " << data_str;
+          // LOG(INFO) << "ServerP2P: got string " << data_str;
           // 触发onmessage事件
           self->xevents->call("onmessage");
         } catch (XSocketExceptionConnectionWillClose e) {
@@ -421,12 +423,8 @@ class XSocketServerP2P : public XSocketServer<T> {
       usleep(1000000);
     }
   }
-  // std::future<void> server_loop_start() {
-  //   return std::async(XSocketServerP2P::server_loop, this);
-  // }
-  std::thread server_loop_start() {
-    std::thread t(XSocketServerP2P::server_loop, this);
-    return t;
+  std::thread* server_loop_start() {
+    return new std::thread(XSocketServerP2P::server_loop, this);
   }
 };
 
@@ -470,7 +468,7 @@ class XSocketClientP2P : public XSocketClient<T> {
             self->data.push(data_str);
           } else {
           }
-          LOG(INFO) << "ClientP2P: got string " << data_str;
+          // LOG(INFO) << "ClientP2P: got string " << data_str;
           // 触发onmessage事件
           self->xevents->call("onmessage");
         } catch (XSocketExceptionConnectionWillClose e) {
@@ -485,12 +483,7 @@ class XSocketClientP2P : public XSocketClient<T> {
       usleep(1000000);
     }
   }
-  // std::future<void> client_loop_start() {
-  //   std::future<void> f = std::async(XSocketClientP2P::client_loop, this);
-  //   return f;
-  // }
-  std::thread client_loop_start() {
-    std::thread t(XSocketClientP2P::client_loop, this);
-    return t;
+  std::thread* client_loop_start() {
+    return new std::thread(XSocketClientP2P::client_loop, this);
   }
 };
