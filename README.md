@@ -49,6 +49,14 @@
 
 ### 运行逻辑分析
 
+TCP:
+
+<img src="README.assets/20171106202553172" alt="这里写图片描述" style="zoom:33%;" />
+
+UDP:
+
+<img src="README.assets/20171106202609548" alt="这里写图片描述" style="zoom:33%;" />
+
 **关于网络协议**：使用TCP吧。
 
 **关于被动/中断模式**：两种模式可以混合共存，不互相影响。
@@ -70,7 +78,7 @@
    3. ServerP2M可以继承ServerP2M，通过更改开关实现逻辑
    4. ServerAR继承Server
 2. **Client**
-   1. Client做抽象基类（仅包含`connect`逻辑）
+   1. Client做抽象基类（包含`connect`、`bind`逻辑）
    2. ClientP2P、ClientP2M、ClientAR均继承Client
 
 **P2P**：
