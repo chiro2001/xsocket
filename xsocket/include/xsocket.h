@@ -172,7 +172,7 @@ class XSocketAddress {
     LOG(INFO) << "Address: connected";
   }
   // Client使用，在初始化addr之后、bind之前使用。
-  // void mode_client() { this->sock_client = this->sock; }
+  void mode_client() { this->sock_client = this->sock; }
 
   // 按照单个字符读取，读取sock_client
   int sock_read_byte() {
@@ -458,7 +458,7 @@ class XSocketClientP2P : public XSocketClient<T> {
   }
   static void client_loop(XSocketClientP2P<T>* self) {
     while (true) {
-      self->addr->sock_client = self->addr->sock;
+      self->addr->mode_client();
       self->addr->sock_connect();
       while (true) {
         try {
