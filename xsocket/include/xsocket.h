@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <chrono>
+#include <cstring>
 #include <exception>
 #include <future>
 #include <iostream>
@@ -21,6 +23,7 @@
 #include <vector>
 
 // #define MY_SOCKET_BUFSIZE (1 << 16)
+#define XSOCKET_BUFSIZ_EXCEPTION 1 << 10
 // 继承基类构造函数的语法糖
 #define USUPER(CLASS) \
  public:              \
@@ -49,13 +52,12 @@ class XSocketExceptionBase : public std::exception {
     return this;
   }
   const char* what() const throw() {
-    // std::stringstream ss;
-    // ss << "[" << typeid(*this).name() << "] : " << this->message;
-    // return (const char*)(ss.str().c_str());
-    std::string s;
-    s = std::string("[") + std::string(typeid(*this).name()) +
-        std::string("] : ") + this->message;
-    return s.c_str();
+    static std::stringstream ss;
+    static char buf[XSOCKET_BUFSIZ_EXCEPTION];
+    ss.str("");
+    ss << "[" << typeid(*this).name() << "] : " << this->message;
+    strcpy(buf, ss.str().c_str());
+    return (const char*)buf;
   }
 };
 /*
@@ -104,14 +106,13 @@ class XSocketAddress {
   int sock_client = 0;
 
   std::string to_string() {
-    // static std::stringstream ss;
-    // std::stringstream ss;
-    // ss.str("");
+    static std::stringstream ss;
+    static std::string result;
+    ss.str("");
     // ss << this->ip << "[" << this->port << "]";
-    // ss << this->ip << ":" << this->port;
-    // return ss.str();
-    return this->ip + std::to_string(this->port);
-    // return std::string("");
+    ss << this->ip << ":" << this->port;
+    result = ss.str();
+    return result;
   }
   // 一些配置
   // 最大服务器同时链接数量
@@ -124,13 +125,12 @@ class XSocketAddress {
     // 参数错误了
     if (this->ip.length() == 0 || this->port <= 0) return -1;
     this->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);  // TCP
-    // this->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // UDP
     // 设置地址
     memset(&this->addr, 0, sizeof(this->addr));
     this->addr.sin_family = AF_INET;
     this->addr.sin_addr.s_addr = inet_addr(this->ip.c_str());
     this->addr.sin_port = htons(port);
-    // LOG(INFO) << "Address: opened " << this->ip;
+    LOG(INFO) << "Address: opened " << this->to_string();
     return this->sock;
   }
   int sock_close_all() {
@@ -155,7 +155,7 @@ class XSocketAddress {
 
     int ret = bind(this->sock, (struct sockaddr*)&this->addr,
                    sizeof(struct sockaddr));
-    // LOG(INFO) << "Address: binding " << this->ip << "(" << ret << ")";
+    LOG(INFO) << "Address: binding " << this->to_string() << "(" << ret << ")";
     return ret;
   }
   int sock_bind_client() {
@@ -185,9 +185,9 @@ class XSocketAddress {
   void mode_client() { this->sock_client = this->sock; }
 
   // 按照单个字符读取，读取sock_client
-  int sock_read_byte() {
-    int data = 0;
-    throwif(read(this->sock_client, &data, 1) <= 0, XSocketExceptionReading());
+  uint8_t sock_read_byte() {
+    uint8_t data = 0;
+    throwif(read(this->sock_client, &data, 1) <= 0, XSocketExceptionReading("sock_read_byte"));
     return data;
   }
   // 按照字符串读取，遇到'\0'或者<0停止
@@ -216,6 +216,11 @@ class XSocketAddress {
 
   // 写入结束字符
   void sock_bye() { this->sock_write_byte((uint8_t)XSOCKET_FLAG_END); }
+  // 中断传输
+  void sock_shutdown() {
+    // 终止传送
+    shutdown(this->sock_client, 1);
+  }
 };
 
 /*
@@ -338,7 +343,8 @@ class XEvents {
     if (ptr == this->callers[name].end()) return;
     this->callers[name].erase(ptr);
   }
-  static void gc(std::vector<std::thread*> ths, XSocketCallingMessage<T>* message) {
+  static void gc(std::vector<std::thread*> ths,
+                 XSocketCallingMessage<T>* message) {
     for (std::thread* t : ths) t->join();
     // 所有对应线程执行完成之后，清理内存
     for (std::thread* t : ths) delete t;
@@ -383,6 +389,10 @@ class XSocket {
   std::mutex lock;
   // 事件管理
   XEvents<T>* xevents;
+  // 启动线程管理
+  std::future<void> future;
+  // 控制标志
+  bool running = false;
   XSocket(std::string ip, int port) {
     // 检查模板类型是否正确
     if (!(std::is_same<T, Json::Value>::value ||
@@ -431,6 +441,13 @@ class XSocket {
     } else {
     }
   }
+  void stop() {
+    // 用flag终止进程
+    this->running = false;
+    this->addr->sock_bye();
+    // 然后中断传输，但是保留缓冲区内容。
+    this->addr->sock_shutdown();
+  }
 };
 
 // 工作模式枚举
@@ -466,8 +483,9 @@ class XSocketServerP2P : public XSocketServer<T> {
   XSocketServerP2P(std::string ip, int port) : XSocketServer<T>(ip, port) {
     this->stats |= P2P;
   }
-  static void server_loop(XSocketServerP2P<T>* self) {
-    while (true) {
+  static void loop(XSocketServerP2P<T>* self) {
+    self->running = true;
+    while (self->running) {
       self->addr->sock_accept();
       while (true) {
         try {
@@ -481,19 +499,21 @@ class XSocketServerP2P : public XSocketServer<T> {
           // 触发onmessage事件
           self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
-          LOG(WARNING) << "XSocketExceptionConnectionWillClose" << e.what();
+          LOG(WARNING) << e.what();
           break;
         } catch (XSocketExceptionReading e) {
-          LOG(ERROR) << "XSocketExceptionReading" << e.what();
+          LOG(ERROR) << e.what();
           break;
         }
       }
       self->addr->sock_close_client();
-      usleep(1000000);
+      // usleep(1000000);
+      LOG(INFO) << "Server connect restarting...";
     }
   }
-  std::thread* server_loop_start() {
-    return new std::thread(XSocketServerP2P::server_loop, this);
+  std::future<void>* start() {
+    this->future = std::async(XSocketServerP2P::loop, this);
+    return &this->future;
   }
 };
 
@@ -525,8 +545,9 @@ class XSocketClientP2P : public XSocketClient<T> {
   XSocketClientP2P(std::string ip, int port) : XSocketClient<T>(ip, port) {
     this->stats |= P2P;
   }
-  static void client_loop(XSocketClientP2P<T>* self) {
-    while (true) {
+  static void loop(XSocketClientP2P<T>* self) {
+    self->running = true;
+    while (self->running) {
       self->addr->mode_client();
       self->addr->sock_connect();
       while (true) {
@@ -541,18 +562,20 @@ class XSocketClientP2P : public XSocketClient<T> {
           // 触发onmessage事件
           self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
-          LOG(WARNING) << "XSocketExceptionConnectionWillClose" << e.what();
+          LOG(WARNING) << e.what();
           break;
         } catch (XSocketExceptionReading e) {
-          LOG(ERROR) << "XSocketExceptionReading" << e.what();
+          LOG(ERROR) << e.what();
           break;
         }
       }
       self->addr->sock_close_client();
-      usleep(1000000);
+      // usleep(1000000);
+      LOG(WARNING) << "Client restarting...";
     }
   }
-  std::thread* client_loop_start() {
-    return new std::thread(XSocketClientP2P::client_loop, this);
+  std::future<void>* start() {
+    this->future = std::async(XSocketClientP2P::loop, this);
+    return &this->future;
   }
 };
