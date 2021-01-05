@@ -14,11 +14,9 @@ void on_init(const char *cmd) {
   google::InitGoogleLogging(cmd);
 }
 
-void onmessage(XSocketCallingMessage<std::string> msg) {
-  // 取出缓冲区第一个
-  std::string str = msg.data->front();
-  msg.data->pop();
-  LOG(INFO) << "[" << msg.data << "](" << msg.code << ")" << str;
+void onmessage(XSocketCallingMessage<std::string>* msg) {
+  std::string str = msg->response->data;
+  LOG(INFO) << "[" << msg->data << "](" << msg->code << ")" << str;
 }
 
 int main(int argc, char **argv) {
@@ -61,7 +59,8 @@ void server_sender(XSocketServerP2P<std::string> *self) {
   try {
     self->send_data("DATA FROM SERVER!!!\n");
   } catch (XSocketExceptionWriting e) {
-    LOG(WARNING) << "Server: XSocketExceptionWriting " << e.what();
+    std::cout << "Server: XSocketExceptionWriting " << e.what() << std::endl;
+    // LOG(WARNING) << "Server: XSocketExceptionWriting " << e.what();
   }
   // LOG(INFO) << "->";
 }
@@ -70,7 +69,8 @@ void client_sender(XSocketClientP2P<std::string> *self) {
   try {
     self->send_data("Data from Client...\n");
   } catch (XSocketExceptionWriting e) {
-    LOG(WARNING) << "Client: XSocketExceptionWriting " << e.what();
+    std::cout << "Client: XSocketExceptionWriting " << e.what() << std::endl;
+    // LOG(WARNING) << "Client: XSocketExceptionWriting " << e.what();
   }
   // LOG(INFO) << "<-";
 }

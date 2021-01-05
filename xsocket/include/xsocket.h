@@ -49,9 +49,13 @@ class XSocketExceptionBase : public std::exception {
     return this;
   }
   const char* what() const throw() {
-    std::stringstream ss;
-    ss << "[" << typeid(*this).name() << "] : " << this->message;
-    return (const char*)(ss.str().c_str());
+    // std::stringstream ss;
+    // ss << "[" << typeid(*this).name() << "] : " << this->message;
+    // return (const char*)(ss.str().c_str());
+    std::string s;
+    s = std::string("[") + std::string(typeid(*this).name()) +
+        std::string("] : ") + this->message;
+    return s.c_str();
   }
 };
 /*
@@ -73,6 +77,12 @@ class XSocketExceptionReading : public XSocketExceptionBase {
   USUPER(XSocketExceptionBase)
 };
 class XSocketExceptionWriting : public XSocketExceptionBase {
+  USUPER(XSocketExceptionBase)
+};
+class XSocketExceptionResponseParse : public XSocketExceptionBase {
+  USUPER(XSocketExceptionBase)
+};
+class XSocketExceptionData : public XSocketExceptionBase {
   USUPER(XSocketExceptionBase)
 };
 
@@ -196,7 +206,7 @@ class XSocketAddress {
   // 写入字符
   void sock_write_byte(uint8_t d) {
     throwif(this->sock_client <= 0 || write(this->sock_client, &d, 1) <= 0,
-            XSocketExceptionWriting());
+            XSocketExceptionWriting("Error when writing..."));
   }
   // 写入字符串
   void sock_write_string(std::string s) {
@@ -208,54 +218,76 @@ class XSocketAddress {
   void sock_bye() { this->sock_write_byte((uint8_t)XSOCKET_FLAG_END); }
 };
 
-// /*
-//  * @brief 返回数据包的类
-//  * 在触发接收到数据的时候在message中包含这个类。
-//  * 如果是P2P、Json/string中断调用模式，里面应该只有一个元素。
-//  * ~~如果是P2P、char中断调用模式，里面应该是用vector构成的字符串。~~
-//  * 如果是被动调用模式，就直接返回vector数据了
-//  */
-// /*
-// Json Response 格式：
-// {
-//   code: 0,              // 0表示正常，必选
-//   message: "Success",   // 仅用于显示，可选
-//   data: {               // 必选
-//     ...                 // 传输的数据
-//   }
-// }
-// */
 /*
+ * @brief 返回数据包的类
+ * 在触发接收到数据的时候在message中包含这个类。
+ * content里面应该只有一个元素。
+ */
+/*
+Json Response 格式：
+{
+  code: 0,              // 0表示正常，必选
+  message: "Success",   // 仅用于显示，可选
+  data: {               // 必选
+    ...                 // 传输的数据
+  }
+}
+*/
 template <class T>
-class XSocketResponse {
+class XSocketResponse {};
+
+// 特化两个类型
+template <>
+class XSocketResponse<std::string> {
  public:
-  std::vector<T> content;
+  std::vector<std::string> content;
   // 如果是Json格式而且是中断调用模式，数据会解析到下面。
   // 未初始化
   static const int not_inited = -1;
-  int code = XSocketResponse<T>::not_inited;
+  int code = XSocketResponse<std::string>::not_inited;
+  std::string message;
+  std::string data;
+
+  XSocketResponse(std::vector<std::string> content_) : content(content_) {
+    this->parse();
+  }
+
+  void parse() {
+    if (!this->content.size() == 1)
+      throw XSocketExceptionResponseParse("Data in content incorrect.");
+    this->code = XSocketResponse<std::string>::not_inited;
+    this->data = this->content[0];
+  }
+};
+template <>
+class XSocketResponse<Json::Value> {
+ public:
+  std::vector<Json::Value> content;
+  // 如果是Json格式而且是中断调用模式，数据会解析到下面。
+  // 未初始化
+  static const int not_inited = -1;
+  int code = XSocketResponse<Json::Value>::not_inited;
   std::string message;
   Json::Value data;
 
-  void parse() {
-    if (!std::is_same<T, Json::Value>::value) {
-      this->code = XSocketResponse<T>::not_inited;
-      return;
-    }
-    if (!this->content.size() == 1)
-      throw ExceptionResponseParse(
-          "You can only parse response using interrupt mode.");
-    Json::Value top = this->content.get(0);
-    if ((!top.isMember("code")) || (!top.isMember("data")))
-      throw ExceptionResponseParse("Some arguments are missing.");
-    this->data = top["data"];
-    this->code = top["code"];
-    if (top.isMember("message")) this->message = top["message"];
+  XSocketResponse(std::vector<Json::Value> content_) : content(content_) {
+    this->parse();
   }
 
-  class ExceptionResponseParse : public XSocketExceptionBase {};
+  void parse() {
+    if (!this->content.size() == 1)
+      throw XSocketExceptionResponseParse("Data in content incorrect.");
+    Json::Value top = this->content[0];
+    if ((!top.isMember("code")) || (!top.isMember("data")))
+      throw XSocketExceptionResponseParse("Some arguments are missing.");
+    this->data = top["data"];
+    this->code = top["code"].asInt();
+    if (top.isMember("message")) this->message = top["message"].asString();
+  }
 };
-*/
+
+template <class T>
+class XSocket;
 
 /*
  * @brief 回调使用的参数类
@@ -264,12 +296,18 @@ class XSocketResponse {
 template <class T>
 class XSocketCallingMessage {
  public:
-  // XSocketResponse<T>* response = NULL;
+  XSocketResponse<T>* response = NULL;
   // 缓冲区指针
-  std::queue<T>* data;
+  XSocket<T>* data = NULL;
   int code = 0;
-  XSocketCallingMessage(int code_, std::queue<T>* data_)
+  XSocketCallingMessage(int code_, XSocket<T>* data_,
+                        XSocketResponse<T>* response_)
+      : data(data_), code(code_), response(response_) {}
+  XSocketCallingMessage(int code_, XSocket<T>* data_)
       : data(data_), code(code_) {}
+  ~XSocketCallingMessage() {
+    if (this->response) delete this->response;
+  }
 };
 
 /*
@@ -280,19 +318,19 @@ template <class T>
 class XEvents {
  public:
   // 缓冲区指针
-  std::queue<T>* data;
-  XEvents(std::queue<T>* data_) : data(data_) {}
+  XSocket<T>* data;
+  XEvents(XSocket<T>* data_) : data(data_) {}
   // 记录函数指针，注意要强制转换调用。
   std::map<std::string, std::vector<void*>> callers;
   void listener_add(std::string name,
-                    void (*listener)(XSocketCallingMessage<T>)) {
+                    void (*listener)(XSocketCallingMessage<T>*)) {
     if (!listener) return;
     if (this->callers.find(name) == this->callers.end())
       this->callers[name] = std::vector<void*>();
     this->callers[name].push_back((void*)listener);
   }
   void listener_remove(std::string name,
-                       void (*listener)(XSocketCallingMessage<T>)) {
+                       void (*listener)(XSocketCallingMessage<T>*)) {
     if (!listener) return;
     if (this->callers.find(name) == this->callers.end()) return;
     auto ptr = std::find(this->callers[name].begin(), this->callers[name].end(),
@@ -300,18 +338,33 @@ class XEvents {
     if (ptr == this->callers[name].end()) return;
     this->callers[name].erase(ptr);
   }
-  void call(std::string name, XSocketCallingMessage<T> message) {
+  static void gc(std::vector<std::thread*> ths, XSocketCallingMessage<T>* message) {
+    for (std::thread* t : ths) t->join();
+    // 所有对应线程执行完成之后，清理内存
+    for (std::thread* t : ths) delete t;
+    delete message;
+  }
+  void call(std::string name, XSocketCallingMessage<T>* message) {
     if (this->callers.find(name) == this->callers.end()) return;
+    std::vector<std::thread*> ths;
     for (auto ptr : this->callers[name]) {
-      // 启动线程，然后...不管他。
-      // std::future<void> f =
-      //     std::async((void (*)(XSocketCallingMessage<T>))ptr, message);
-      new std::thread((void (*)(XSocketCallingMessage<T>))ptr, message);
+      // 启动线程，然后...启动一个垃圾回收线程。
+      ths.emplace_back(
+          new std::thread((void (*)(XSocketCallingMessage<T>*))ptr, message));
     }
+    // 分离垃圾回收线程
+    std::thread(gc, ths, message).detach();
   }
   // 空消息
   void call(std::string name, int code = 0) {
-    this->call(name, XSocketCallingMessage<T>(code, this->data));
+    this->call(name, new XSocketCallingMessage<T>(code, this->data));
+  }
+  // 单条response消息
+  void call(std::string name, T d, int code = 0) {
+    std::vector<T> v = {d};
+    XSocketCallingMessage<T>* msg = new XSocketCallingMessage<T>(
+        code, this->data, new XSocketResponse<T>(v));
+    this->call(name, msg);
   }
 };
 
@@ -326,6 +379,8 @@ class XSocket {
   XSocketAddress* addr;
   // 缓冲区
   std::queue<T> data;
+  // 缓冲区要加锁
+  std::mutex lock;
   // 事件管理
   XEvents<T>* xevents;
   XSocket(std::string ip, int port) {
@@ -334,7 +389,7 @@ class XSocket {
           std::is_same<T, std::string>::value))
       throw XSocketExceptionTemplateUnallowed();
     this->addr = new XSocketAddress(ip, port);
-    this->xevents = new XEvents<T>(&this->data);
+    this->xevents = new XEvents<T>(this);
   }
 
   ~XSocket() {
@@ -354,6 +409,20 @@ class XSocket {
   }
   std::vector<T> data_get(size_t size) {
     return this->data_get_count(this->data.size());
+  }
+  void data_push(T d) {
+    this->lock.try_lock();
+    this->data.push(d);
+    this->lock.unlock();
+  }
+  T data_pop() {
+    this->lock.try_lock();
+    if (this->data_empty())
+      throw XSocketExceptionData("Data is empty when poping.");
+    T d = this->data.front();
+    this->data.pop();
+    this->lock.unlock();
+    return d;
   }
 
   void send_data(T d) {
@@ -410,7 +479,7 @@ class XSocketServerP2P : public XSocketServer<T> {
           }
           // LOG(INFO) << "ServerP2P: got string " << data_str;
           // 触发onmessage事件
-          self->xevents->call("onmessage");
+          self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
           LOG(WARNING) << "XSocketExceptionConnectionWillClose" << e.what();
           break;
@@ -470,7 +539,7 @@ class XSocketClientP2P : public XSocketClient<T> {
           }
           // LOG(INFO) << "ClientP2P: got string " << data_str;
           // 触发onmessage事件
-          self->xevents->call("onmessage");
+          self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
           LOG(WARNING) << "XSocketExceptionConnectionWillClose" << e.what();
           break;
