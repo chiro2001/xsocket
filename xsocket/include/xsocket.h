@@ -36,7 +36,7 @@
 #define throwifminus(x, exception) throwif(x < 0, exception)
 
 // 停止符号，遇到这个FLAG就表明应该断开连接，不能再有写入操作
-const int XSOCKET_FLAG_END = -1;
+const uint8_t XSOCKET_FLAG_END = 0xFF;
 
 /*
  * @brief 异常基类
@@ -81,6 +81,9 @@ class XSocketExceptionReading : public XSocketExceptionBase {
 class XSocketExceptionWriting : public XSocketExceptionBase {
   USUPER(XSocketExceptionBase)
 };
+class XSocketExceptionConnectionClosed : public XSocketExceptionBase {
+  USUPER(XSocketExceptionBase)
+};
 class XSocketExceptionResponseParse : public XSocketExceptionBase {
   USUPER(XSocketExceptionBase)
 };
@@ -104,6 +107,10 @@ class XSocketAddress {
   socklen_t addr_size = sizeof(struct sockaddr_in);
   int sock = 0;
   int sock_client = 0;
+  // 控制标志
+  bool opened = false;
+  // 线程锁：用于控制写入和读取不能同时进行，即只有在读取缓冲区为空的时候可以send数据
+  std::mutex lock;
 
   std::string to_string() {
     static std::stringstream ss;
@@ -133,6 +140,7 @@ class XSocketAddress {
     LOG(INFO) << "Address: opened " << this->to_string();
     return this->sock;
   }
+  inline bool sock_is_open() { return this->opened; }
   int sock_close_all() {
     if (this->sock > 0) {
       LOG(INFO) << "Address: closing server";
@@ -146,6 +154,7 @@ class XSocketAddress {
     if (this->sock_client > 0) {
       LOG(INFO) << "Address: closing client";
       close(this->sock_client);
+      this->opened = false;
     }
     this->sock_client = 0;
     return 0;
@@ -170,24 +179,34 @@ class XSocketAddress {
   // Server使用，返回客户端sock
   int sock_accept() {
     LOG(INFO) << "Address: accepting";
-    return this->sock_client =
-               accept(this->sock, (struct sockaddr*)&this->addr_client,
-                      &this->addr_size);
+    this->sock_client = accept(this->sock, (struct sockaddr*)&this->addr_client,
+                               &this->addr_size);
+    if (this->sock_client >= 0) this->opened = true;
+    return this->sock_client;
   }
 
   void sock_connect() {
     throwifminus(connect(this->sock_client, (struct sockaddr*)&this->addr,
                          sizeof(this->addr)),
                  XSocketExceptionConnectionError());
+    if (this->sock_client >= 0) this->opened = true;
     LOG(INFO) << "Address: connected";
   }
   // Client使用，在初始化addr之后、bind之前使用。
   void mode_client() { this->sock_client = this->sock; }
 
   // 按照单个字符读取，读取sock_client
-  uint8_t sock_read_byte() {
+  inline uint8_t sock_read_byte() {
+    throwif(this->sock_client <= 0 || !this->sock_is_open(),
+            XSocketExceptionConnectionClosed(
+                "Trying to read before connection establish."));
     uint8_t data = 0;
-    throwif(read(this->sock_client, &data, 1) <= 0, XSocketExceptionReading("sock_read_byte"));
+    // throwif(read(this->sock_client, &data, 1) <= 0,
+    //         XSocketExceptionReading("sock_read_byte"));
+    // 同时接收带外数据
+    throwif(recv(this->sock_client, &data, 1, 0) <= 0,
+            XSocketExceptionReading("sock_read_byte"));
+    throwif(data == XSOCKET_FLAG_END, XSocketExceptionConnectionWillClose());
     return data;
   }
   // 按照字符串读取，遇到'\0'或者<0停止
@@ -195,18 +214,31 @@ class XSocketAddress {
     // static std::stringstream ss;
     std::stringstream ss;
     // ss.str("");
-    int c;
+    this->lock.try_lock();
+    uint8_t c;
     while ((c = this->sock_read_byte()) > 0) {
       ss << (char)c;
     }
-    throwifminus(c, XSocketExceptionConnectionWillClose());
+    this->lock.unlock();
+    throwif(c == XSOCKET_FLAG_END, XSocketExceptionConnectionWillClose());
     return ss.str();
   }
 
   // 写入字符
-  void sock_write_byte(uint8_t d) {
-    throwif(this->sock_client <= 0 || write(this->sock_client, &d, 1) <= 0,
-            XSocketExceptionWriting("Error when writing..."));
+  inline void sock_write_byte(uint8_t d, int flag = 0) {
+    throwif(this->sock_client <= 0 || !this->sock_is_open(),
+            XSocketExceptionConnectionClosed(
+                "Trying to write before connection establish."));
+    // int ret = write(this->sock_client, &d, 1);
+    this->lock.try_lock();
+    int ret;
+    try {
+      ret = send(this->sock_client, &d, 1, flag);
+    } catch (...) {
+      throw XSocketExceptionWriting("Unkown error!!!");
+    }
+    this->lock.unlock();
+    throwif(ret <= 0, XSocketExceptionWriting("Error when writing..."));
   }
   // 写入字符串
   void sock_write_string(std::string s) {
@@ -214,8 +246,8 @@ class XSocketAddress {
     this->sock_write_byte(0);
   }
 
-  // 写入结束字符
-  void sock_bye() { this->sock_write_byte((uint8_t)XSOCKET_FLAG_END); }
+  // 写入结束字符，使用带外数发送
+  void sock_bye() { this->sock_write_byte((uint8_t)XSOCKET_FLAG_END, MSG_OOB); }
   // 中断传输
   void sock_shutdown() {
     // 终止传送
@@ -392,6 +424,7 @@ class XSocket {
   // 启动线程管理
   std::future<void> future;
   // 控制标志
+  // 监听线程是否在运行
   bool running = false;
   XSocket(std::string ip, int port) {
     // 检查模板类型是否正确
@@ -436,17 +469,39 @@ class XSocket {
   }
 
   void send_data(T d) {
+    this->lock.try_lock();
     if (std::is_same<T, std::string>::value) {
       this->addr->sock_write_string(d);
     } else {
     }
+    this->lock.unlock();
   }
+  inline bool is_open() { return this->addr->sock_is_open(); }
   void stop() {
     // 用flag终止进程
     this->running = false;
     this->addr->sock_bye();
-    // 然后中断传输，但是保留缓冲区内容。
+    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // 清空对方缓冲区
+    // LOG(INFO) << "\t\t\t\t清空对方缓冲区";
+    // while (true) {
+    //   try {
+    //     this->addr->sock_read_byte();
+    //   } catch (XSocketExceptionConnectionClosed e) {
+    //     LOG(INFO) << "\t\tstop()" << e.what();
+    //     break;
+    //   } catch (XSocketExceptionReading e) {
+    //     LOG(INFO) << "\t\tstop()" << e.what();
+    //     break;
+    //   } catch (XSocketExceptionConnectionWillClose e) {
+    //     LOG(INFO) << "\t\tstop()" << e.what() << " reach ok.";
+    //     break;
+    //   }
+    // }
+    // 然后中断传输，但是保留这边的缓冲区内容。
     this->addr->sock_shutdown();
+    // 再然后触发onclose事件
+    this->xevents->call("onclose");
   }
 };
 
@@ -487,6 +542,7 @@ class XSocketServerP2P : public XSocketServer<T> {
     self->running = true;
     while (self->running) {
       self->addr->sock_accept();
+      self->xevents->call("onopen");
       while (true) {
         try {
           std::string data_str = self->addr->sock_read_string();
@@ -500,12 +556,30 @@ class XSocketServerP2P : public XSocketServer<T> {
           self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
           LOG(WARNING) << e.what();
+          self->addr->opened = false;
+          self->xevents->call("onclose");
           break;
         } catch (XSocketExceptionReading e) {
           LOG(ERROR) << e.what();
           break;
         }
       }
+      // 清空自己的缓冲区
+      // LOG(INFO) << "\t\t\t\t清空自己socket缓冲区";
+      // while (true) {
+      //   try {
+      //     self->addr->sock_read_byte();
+      //   } catch (XSocketExceptionConnectionClosed e) {
+      //     LOG(INFO) << "\t\tstop()" << e.what();
+      //     break;
+      //   } catch (XSocketExceptionReading e) {
+      //     LOG(INFO) << "\t\tstop()" << e.what();
+      //     break;
+      //   } catch (XSocketExceptionConnectionWillClose e) {
+      //     LOG(INFO) << "\t\tstop()" << e.what() << " reach ok.";
+      //     break;
+      //   }
+      // }
       self->addr->sock_close_client();
       // usleep(1000000);
       LOG(INFO) << "Server connect restarting...";
@@ -550,18 +624,21 @@ class XSocketClientP2P : public XSocketClient<T> {
     while (self->running) {
       self->addr->mode_client();
       self->addr->sock_connect();
+      self->xevents->call("onopen");
       while (true) {
         try {
           std::string data_str = self->addr->sock_read_string();
           // 写入缓冲区
           if (std::is_same<T, std::string>::value) {
-            self->data.push(data_str);
+            self->data_push(data_str);
           } else {
           }
           // LOG(INFO) << "ClientP2P: got string " << data_str;
           // 触发onmessage事件
           self->xevents->call("onmessage", data_str);
         } catch (XSocketExceptionConnectionWillClose e) {
+          self->addr->opened = false;
+          self->xevents->call("onclose");
           LOG(WARNING) << e.what();
           break;
         } catch (XSocketExceptionReading e) {
@@ -573,6 +650,7 @@ class XSocketClientP2P : public XSocketClient<T> {
       // usleep(1000000);
       LOG(WARNING) << "Client restarting...";
     }
+    LOG(WARNING) << "Client listening thread exiting...";
   }
   std::future<void>* start() {
     this->future = std::async(XSocketClientP2P::loop, this);

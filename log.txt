@@ -1,0 +1,78 @@
+I20210106 10:25:59.085124  5969 main.cpp:66] Hey my friend! Wish you happy to use XSocket!
+I20210106 10:25:59.085680  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
+I20210106 10:25:59.085736  5969 xsocket.h:165] Address: binding 0.0.0.0:6872(0)
+I20210106 10:25:59.085752  5969 xsocket.h:174] Address: start listening
+I20210106 10:25:59.085965  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
+I20210106 10:25:59.086231  5970 xsocket.h:179] Address: accepting
+I20210106 10:25:59.087486  5971 xsocket.h:191] Address: connected
+I20210106 10:25:59.098601  5975 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.098645  5974 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.098809  5978 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.099465  5980 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.099479  5981 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.099789  5984 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.099864  5985 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.100015  5973 main.cpp:42] Client: I will end this connection!      // 已经发送了10条
+I20210106 10:25:59.100279  5989 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.100358  5988 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.100400  5992 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.100509  5994 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.100548  5995 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.100678  5998 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.100733  6000 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.100858  6002 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.101162  6004 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.101263  6005 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.101388  6008 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.101528  6009 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.101642  6012 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.101840  6013 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.101907  6016 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.102205  6017 main.cpp:17] [0x55678ee8a880](0)Data from Client...   // 这里是Client的最后一条
+I20210106 10:25:59.102349  6020 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+E20210106 10:25:59.102536  5970 xsocket.h:524] [23XSocketExceptionReading] : sock_read_byte // 这里应该是发送结束消息的
+I20210106 10:25:59.103044  6026 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.102614  6022 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.102778  6024 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103077  5970 xsocket.h:153] Address: closing client
+W20210106 10:25:59.103204  5972 main.cpp:49] Server: [23XSocketExceptionWriting] : Error when writing...    // Server在写入错误之后断开
+I20210106 10:25:59.103226  5970 xsocket.h:530] Server connect restarting...
+I20210106 10:25:59.103286  5970 xsocket.h:179] Address: accepting
+I20210106 10:25:59.103318  6028 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103451  6030 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103583  6032 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103744  6034 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103857  6036 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.103996  6038 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104125  6040 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104264  6042 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104403  6044 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104537  6046 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104681  6048 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.104809  6050 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.105037  6052 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
+I20210106 10:25:59.105306  6054 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!   // Server发送的消息让Client一直读取到这里才停止
+E20210106 10:25:59.105361  5971 xsocket.h:587] [23XSocketExceptionReading] : sock_read_byte // 遇到读取错误，重启
+I20210106 10:25:59.105506  5971 xsocket.h:153] Address: closing client
+W20210106 10:25:59.105563  5971 xsocket.h:593] Client restarting...                   // 这时候重启遇到停止指令，监听线程停止运行
+I20210106 10:25:59.107659  5969 xsocket.h:144] Address: closing server
+I20210106 10:25:59.107865  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
+I20210106 10:25:59.108196  6056 xsocket.h:191] Address: connected                     // 主线程重新启动的Client开始发送数据
+I20210106 10:25:59.108743  6058 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.109432  6060 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.109640  6062 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.110092  6064 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.110294  6066 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.110481  6068 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.110657  6057 main.cpp:42] Client: I will end this connection!
+I20210106 10:25:59.110805  6070 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.111120  6072 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+I20210106 10:25:59.111481  6074 main.cpp:17] [0x55678ee8a880](0)Data from Client...
+E20210106 10:25:59.111629  5970 xsocket.h:524] [23XSocketExceptionReading] : sock_read_byte
+I20210106 10:25:59.111784  5970 xsocket.h:153] Address: closing client
+W20210106 10:25:59.111831  5972 main.cpp:49] Server: [23XSocketExceptionWriting] : Error when writing...
+E20210106 10:25:59.111896  6056 xsocket.h:587] [23XSocketExceptionReading] : sock_read_byte
+I20210106 10:25:59.111949  6056 xsocket.h:153] Address: closing client
+I20210106 10:25:59.111899  5970 xsocket.h:530] Server connect restarting...
+W20210106 10:25:59.111981  6056 xsocket.h:593] Client restarting...
+I20210106 10:25:59.111985  5970 xsocket.h:179] Address: accepting
