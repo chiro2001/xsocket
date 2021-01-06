@@ -211,16 +211,16 @@ class XSocketAddress {
     // 先设置成非阻塞的socket然后恢复
     // LOG(INFO) << "enter reading while.";
     // LOG(INFO) << "locking reading socket...";
-    this->lock.lock();
-    int flags = fcntl(this->sock_client, F_GETFL, 0);
-    fcntl(this->sock_client, F_SETFL, flags | SOCK_NONBLOCK);
+    // this->lock.lock();
+    // int flags = fcntl(this->sock_client, F_GETFL, 0);
+    // fcntl(this->sock_client, F_SETFL, flags | SOCK_NONBLOCK);
     int ret = recv(this->sock_client, &data, 1, 0);
     if (ret == 0) {
       this->opened = false;
       throw XSocketExceptionConnectionWillClose("shuting down now!");
     }
-    fcntl(this->sock_client, F_SETFL, flags);
-    this->lock.unlock();
+    // fcntl(this->sock_client, F_SETFL, flags);
+    // this->lock.unlock();
     // if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
       // throw XSocketExceptionConnectionWillClose("shuting down detected!");
 
