@@ -36,7 +36,7 @@ void looper_server(unsigned int utime,
 void looper_client(unsigned int utime,
                    int (*timer)(XSocketClientP2P<std::string> *),
                    XSocketClientP2P<std::string> *arg) {
-  int count = 10;
+  int count = 100;
   while (count) {
     std::this_thread::sleep_for(std::chrono::milliseconds(utime));
     LOG(INFO) << "looper_client(): count = " << count << ", ret = " << timer(arg);
@@ -83,16 +83,9 @@ int client_sender(XSocketClientP2P<std::string> *self) {
 void onclose(XSocketCallingMessage<std::string> *msg) {
   // 再启动
   LOG(INFO) << "XEvent: onclose";
-  if (xsc) {
-    std::thread(onclose, msg).detach();
-    auto tmp = xsc;
-    xsc = NULL;
-    delete tmp;
-  }
   LOG(INFO) << "Client: starting new...";
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  xsc = new XSocketClientP2P<std::string>(ip, port);
-  xsc->start();
+  xsc->restart();
   std::thread(looper_client, 0, client_sender, xsc).detach();
   xsc->xevents->listener_add("onmessage", onmessage);
   xsc->xevents->listener_add("onclose", onclose);
@@ -111,10 +104,12 @@ int main(int argc, char **argv) {
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   xss->xevents->listener_add("onmessage", onmessage);
-  std::thread(looper_server, 500, server_sender, xss).detach();
+  // std::thread(looper_server, 500, server_sender, xss).detach();
+  std::thread(looper_server, 0, server_sender, xss).detach();
   xsc->xevents->listener_add("onmessage", onmessage);
   xsc->xevents->listener_add("onclose", onclose);
-  std::thread(looper_client, 100, client_sender, xsc).detach();
+  // std::thread(looper_client, 100, client_sender, xsc).detach();
+  std::thread(looper_client, 0, client_sender, xsc).detach();
   // std::this_thread::sleep_for(std::chrono::milliseconds(10));
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   exit(0);

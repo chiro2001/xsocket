@@ -222,7 +222,7 @@ class XSocketAddress {
     // fcntl(this->sock_client, F_SETFL, flags);
     // this->lock.unlock();
     // if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-      // throw XSocketExceptionConnectionWillClose("shuting down detected!");
+    // throw XSocketExceptionConnectionWillClose("shuting down detected!");
 
     // LOG(INFO) << "released reading socket";
 
@@ -236,9 +236,22 @@ class XSocketAddress {
   std::string sock_read_string() {
     std::stringstream ss;
     uint8_t c;
+    bool flag = true;
+    while (flag) {
+      try {
+        c = this->sock_read_byte();
+      } catch (XSocketExceptionReading) {
+        continue;
+      }
+      flag = false;
+    }
+    ss << (char)c;
+    this->lock.lock();
+    // 读取完成一个字符串之前不准发送数据
     while ((c = this->sock_read_byte()) > 0) {
       ss << (char)c;
     }
+    this->lock.unlock();
     throwif(c == XSOCKET_FLAG_END, XSocketExceptionConnectionWillClose());
     return ss.str();
   }
@@ -457,6 +470,20 @@ class XSocket {
     // 包含断开socket操作
     delete this->addr;
   }
+  // 重启连接
+  void reset() {
+    this->running = false;
+    // 注销事件
+    delete this->xevents;
+    this->xevents = new XEvents<T>(this);
+    // 清空缓冲区
+    while (!this->data_empty()) this->data_pop();
+    // 断开连接
+    std::string ip = this->addr->ip;
+    int port = this->addr->port;
+    delete this->addr;
+    this->addr = new XSocketAddress(ip, port);
+  }
   // 缓冲区管理
   bool data_empty() { return this->data.empty(); }
   std::vector<T> data_get_count(size_t size) {
@@ -597,6 +624,10 @@ class XSocketServerP2P : public XSocketServer<T> {
     this->future = std::async(XSocketServerP2P::loop, this);
     return &this->future;
   }
+  std::future<void>* restart() {
+    this->reset();
+    return this->start();
+  }
 };
 
 /*
@@ -663,5 +694,9 @@ class XSocketClientP2P : public XSocketClient<T> {
   std::future<void>* start() {
     this->future = std::async(XSocketClientP2P::loop, this);
     return &this->future;
+  }
+  std::future<void>* restart() {
+    this->reset();
+    return this->start();
   }
 };
