@@ -7,10 +7,23 @@
 #include <ctime>
 #include <iostream>
 
+#define MODE_SLOW
+
+#ifdef MODE_SLOW
+const int time_loop_server = 500;
+const int time_loop_client = 100;
+const int time_loop_main = 10000000;
+#else
+const int time_loop_server = 0;
+const int time_loop_client = 0;
+const int time_loop_main = 10000000;
+#endif
+
 XSocketServerP2P<std::string> *xss;
 XSocketClientP2P<std::string> *xsc;
 int port;
 std::string ip = "0.0.0.0";
+std::future<void> future_server, future_client;
 
 void on_init(const char *cmd) {
   FLAGS_alsologtostderr = 1;
@@ -36,10 +49,11 @@ void looper_server(unsigned int utime,
 void looper_client(unsigned int utime,
                    int (*timer)(XSocketClientP2P<std::string> *),
                    XSocketClientP2P<std::string> *arg) {
-  int count = 100;
+  int count = 10;
   while (count) {
     std::this_thread::sleep_for(std::chrono::milliseconds(utime));
-    LOG(INFO) << "looper_client(): count = " << count << ", ret = " << timer(arg);
+    LOG(INFO) << "looper_client(): count = " << count
+              << ", ret = " << timer(arg);
     if (count > 0) count--;
   }
   // 由Client结束
@@ -58,9 +72,11 @@ int server_sender(XSocketServerP2P<std::string> *self) {
                     std::string("\n"));
   } catch (XSocketExceptionWriting e) {
     LOG(WARNING) << "Server: " << e.what();
+    cnt--;
     return 1;
   } catch (XSocketExceptionConnectionClosed e) {
-    LOG(WARNING) << "Server: " << e.what();
+    // LOG(WARNING) << "Server: " << e.what();
+    cnt--;
     return 2;
   }
   return 0;
@@ -72,9 +88,11 @@ int client_sender(XSocketClientP2P<std::string> *self) {
                     std::to_string(cnt++) + std::string("\n"));
   } catch (XSocketExceptionWriting e) {
     LOG(WARNING) << "Client: " << e.what();
+    cnt--;
     return 1;
   } catch (XSocketExceptionConnectionClosed e) {
-    LOG(WARNING) << "Client: " << e.what();
+    // LOG(WARNING) << "Client: " << e.what();
+    cnt--;
     return 2;
   }
   return 0;
@@ -86,7 +104,13 @@ void onclose(XSocketCallingMessage<std::string> *msg) {
   LOG(INFO) << "Client: starting new...";
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
   xsc->restart();
-  std::thread(looper_client, 0, client_sender, xsc).detach();
+  // 等待sender进程退出
+  while (future_client.wait_for(std::chrono::milliseconds(0)) !=
+         std::future_status::ready) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  future_client =
+      std::async(looper_client, time_loop_client, client_sender, xsc);
   xsc->xevents->listener_add("onmessage", onmessage);
   xsc->xevents->listener_add("onclose", onclose);
 }
@@ -104,14 +128,13 @@ int main(int argc, char **argv) {
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   xss->xevents->listener_add("onmessage", onmessage);
-  // std::thread(looper_server, 500, server_sender, xss).detach();
-  std::thread(looper_server, 0, server_sender, xss).detach();
+  future_server =
+      std::async(looper_server, time_loop_server, server_sender, xss);
   xsc->xevents->listener_add("onmessage", onmessage);
   xsc->xevents->listener_add("onclose", onclose);
-  // std::thread(looper_client, 100, client_sender, xsc).detach();
-  std::thread(looper_client, 0, client_sender, xsc).detach();
-  // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  future_client =
+      std::async(looper_client, time_loop_client, client_sender, xsc);
+  std::this_thread::sleep_for(std::chrono::milliseconds(time_loop_main));
   exit(0);
   return 0;
 }

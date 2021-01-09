@@ -209,25 +209,11 @@ class XSocketAddress {
     uint8_t data = 0;
     // 同时接收带外数据
     // 先设置成非阻塞的socket然后恢复
-    // LOG(INFO) << "enter reading while.";
-    // LOG(INFO) << "locking reading socket...";
-    // this->lock.lock();
-    // int flags = fcntl(this->sock_client, F_GETFL, 0);
-    // fcntl(this->sock_client, F_SETFL, flags | SOCK_NONBLOCK);
     int ret = recv(this->sock_client, &data, 1, 0);
     if (ret == 0) {
       this->opened = false;
       throw XSocketExceptionConnectionWillClose("shuting down now!");
     }
-    // fcntl(this->sock_client, F_SETFL, flags);
-    // this->lock.unlock();
-    // if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-    // throw XSocketExceptionConnectionWillClose("shuting down detected!");
-
-    // LOG(INFO) << "released reading socket";
-
-    // LOG(INFO) << "exit reading while with ret " << ret;
-
     throwif(ret < 0, XSocketExceptionReading("sock_read_byte"));
     throwif(data == XSOCKET_FLAG_END, XSocketExceptionConnectionWillClose());
     return data;
@@ -262,10 +248,10 @@ class XSocketAddress {
             XSocketExceptionConnectionClosed(
                 "Trying to write before connection establish."));
     // LOG(INFO) << "locking writing socket...";
-    this->lock.lock();
+    if (!flag) this->lock.lock();
     int ret;
     ret = send(this->sock_client, &d, 1, flag);
-    this->lock.unlock();
+    if (!flag) this->lock.unlock();
     // LOG(INFO) << "released writing socket";
     throwif(ret <= 0, XSocketExceptionWriting("Error when writing..."));
   }
@@ -276,7 +262,19 @@ class XSocketAddress {
   }
 
   // 写入结束字符，使用带外数发送
-  void sock_bye() { this->sock_write_byte((uint8_t)XSOCKET_FLAG_END, MSG_OOB); }
+  void sock_bye() {
+    // this->sock_write_byte((uint8_t)XSOCKET_FLAG_END, MSG_OOB);
+    this->sock_write_byte((uint8_t)XSOCKET_FLAG_END);
+  }
+  // 放弃后续数据，等待结束信号
+  void sock_wait_exit() {
+    LOG(INFO) << "waiting exit...";
+    try {
+      this->sock_read_byte();
+    } catch (XSocketExceptionConnectionWillClose) {
+      LOG(INFO) << "wait exit done!";
+    }
+  }
   // 中断传输
   void sock_shutdown() {
     // 终止传送
@@ -527,26 +525,19 @@ class XSocket {
   }
   inline bool is_open() { return this->addr->sock_is_open(); }
   void stop() {
+    if (!this->addr->sock_is_open()) {
+      LOG(WARNING) << "unexcepted stop()!";
+      return;
+    }
+    // 禁止写入
+    // this->addr->lock.lock();
     // 用flag终止进程
     this->running = false;
+    // 发送停止消息
     this->addr->sock_bye();
-    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    // 清空对方缓冲区
-    // LOG(INFO) << "\t\t\t\t清空对方缓冲区";
-    // while (true) {
-    //   try {
-    //     this->addr->sock_read_byte();
-    //   } catch (XSocketExceptionConnectionClosed e) {
-    //     LOG(INFO) << "\t\tstop()" << e.what();
-    //     break;
-    //   } catch (XSocketExceptionReading e) {
-    //     LOG(INFO) << "\t\tstop()" << e.what();
-    //     break;
-    //   } catch (XSocketExceptionConnectionWillClose e) {
-    //     LOG(INFO) << "\t\tstop()" << e.what() << " reach ok.";
-    //     break;
-    //   }
-    // }
+    // 等待对方的停止消息到达
+    this->addr->sock_wait_exit();
+    // this->addr->lock.unlock();
     // 然后中断传输，但是保留这边的缓冲区内容。
     this->addr->sock_shutdown();
     // this->addr->sock_close_all();
@@ -697,6 +688,10 @@ class XSocketClientP2P : public XSocketClient<T> {
   }
   std::future<void>* restart() {
     this->reset();
+    // 等待线程loop线程关闭然后再重启这个线程
+    while (this->future.wait_for(std::chrono::milliseconds(0)) !=
+           std::future_status::ready)
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     return this->start();
   }
 };
