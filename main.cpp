@@ -104,6 +104,7 @@ void onclose(XSocketCallingMessage<std::string> *msg) {
   LOG(INFO) << "Client: starting new...";
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
   xsc->restart();
+  LOG(INFO) << "Client: restarted!";
   // 等待sender进程退出
   while (future_client.wait_for(std::chrono::milliseconds(0)) !=
          std::future_status::ready) {

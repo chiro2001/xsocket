@@ -111,6 +111,8 @@ class XSocketAddress {
   bool opened = false;
   // 线程锁：用于控制写入和读取不能同时进行，即只有在读取缓冲区为空的时候可以send数据
   std::mutex lock;
+  // 线程锁：控制sock打开关闭标志的锁
+  std::mutex lock_sock;
 
   std::string to_string() {
     static std::stringstream ss;
@@ -148,14 +150,17 @@ class XSocketAddress {
       this->sock = 0;
       return 0;
     }
+    this->lock_sock.lock();
     if (this->sock > 0) {
       LOG(INFO) << "Address: closing server";
       close(this->sock);
     }
     this->sock = 0;
+    this->lock_sock.unlock();
     return 0;
   }
   bool sock_close_client() {
+    this->lock_sock.lock();
     bool flag = false;
     if (this->sock_client > 0) {
       LOG(INFO) << "Address: closing client";
@@ -164,6 +169,7 @@ class XSocketAddress {
       flag = true;
     }
     this->sock_client = 0;
+    this->lock_sock.unlock();
     return flag;
   }
   int sock_bind() {
@@ -244,7 +250,7 @@ class XSocketAddress {
 
   // 写入字符
   inline void sock_write_byte(uint8_t d, int flag = 0) {
-    throwif(this->sock_client <= 0 || !this->sock_is_open(),
+    throwif(this->sock_client <= 0 || (!this->sock_is_open() && !flag),
             XSocketExceptionConnectionClosed(
                 "Trying to write before connection establish."));
     // LOG(INFO) << "locking writing socket...";
@@ -263,8 +269,9 @@ class XSocketAddress {
 
   // 写入结束字符，使用带外数发送
   void sock_bye() {
-    // this->sock_write_byte((uint8_t)XSOCKET_FLAG_END, MSG_OOB);
-    this->sock_write_byte((uint8_t)XSOCKET_FLAG_END);
+    LOG(INFO) << "AddrSock: sending exit code!";
+    // this->sock_write_byte((uint8_t)XSOCKET_FLAG_END);
+    this->sock_write_byte((uint8_t)XSOCKET_FLAG_END, MSG_OOB);
   }
   // 放弃后续数据，等待结束信号
   void sock_wait_exit() {
@@ -383,7 +390,24 @@ class XEvents {
  public:
   // 缓冲区指针
   XSocket<T>* data;
+  // 执行线程指针组
+  std::vector<std::thread*> threads_gc;
+  // 执行线程指针组的操作锁
+  std::mutex lock_gc;
   XEvents(XSocket<T>* data_) : data(data_) {}
+  ~XEvents() {
+    // 取消附加所有线程，防止被淦
+    this->lock_gc.lock();
+    for (std::thread* t : this->threads_gc) {
+      if (!t) continue;
+      try {
+        t->detach();
+      } catch (std::invalid_argument e) {
+        LOG(WARNING) << "~XEvents: " << e.what();
+      }
+    }
+    this->lock_gc.unlock();
+  }
   // 记录函数指针，注意要强制转换调用。
   std::map<std::string, std::vector<void*>> callers;
   void listener_add(std::string name,
@@ -405,10 +429,19 @@ class XEvents {
     this->callers[name].erase(ptr);
   }
   static void gc(std::vector<std::thread*> ths,
-                 XSocketCallingMessage<T>* message) {
+                 XSocketCallingMessage<T>* message, XEvents<T>* self) {
     for (std::thread* t : ths) t->join();
     // 所有对应线程执行完成之后，清理内存
     for (std::thread* t : ths) delete t;
+    self->lock_gc.lock();
+    std::vector<std::vector<std::thread*>::iterator> to_remove;
+    for (std::vector<std::thread*>::iterator t = self->threads_gc.begin();
+         t != self->threads_gc.end(); t++)
+      if (!(!(*t)) && ((*t)->get_id() == std::this_thread::get_id()))
+        to_remove.emplace_back(t);
+    for (std::vector<std::thread*>::iterator t : to_remove)
+      self->threads_gc.erase(t);
+    self->lock_gc.unlock();
     delete message;
   }
   void call(std::string name, XSocketCallingMessage<T>* message) {
@@ -420,7 +453,9 @@ class XEvents {
           new std::thread((void (*)(XSocketCallingMessage<T>*))ptr, message));
     }
     // 分离垃圾回收线程
-    std::thread(gc, ths, message).detach();
+    std::thread* t_gc = new std::thread(gc, ths, message, this);
+    t_gc->detach();
+    this->threads_gc.emplace_back(t_gc);
   }
   // 空消息
   void call(std::string name, int code = 0) {
@@ -600,6 +635,8 @@ class XSocketServerP2P : public XSocketServer<T> {
           LOG(WARNING) << e.what();
           self->addr->opened = false;
           self->xevents->call("onclose");
+          LOG(INFO) << "ServerLoop: sending exit code!";
+          self->addr->sock_bye();
           break;
         } catch (XSocketExceptionReading e) {
           LOG(ERROR) << e.what();
