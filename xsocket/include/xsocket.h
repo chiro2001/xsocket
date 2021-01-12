@@ -305,7 +305,10 @@ Json Response 格式：
 }
 */
 template <class T>
-class XSocketResponse {};
+class XSocketResponse {
+ public:
+  XSocketResponse() {}
+};
 
 // 特化两个类型
 template <>
@@ -318,6 +321,10 @@ class XSocketResponse<std::string> {
   int code = XSocketResponse<std::string>::not_inited;
   std::string message;
   std::string data;
+
+  XSocketResponse() {}
+  XSocketResponse(const XSocketResponse<std::string>& x)
+      : content(x.content), code(x.code), message(x.message), data(x.data) {}
 
   XSocketResponse(std::vector<std::string> content_) : content(content_) {
     this->parse();
@@ -340,6 +347,10 @@ class XSocketResponse<Json::Value> {
   int code = XSocketResponse<Json::Value>::not_inited;
   std::string message;
   Json::Value data;
+
+  XSocketResponse() {}
+  XSocketResponse(const XSocketResponse<Json::Value>& x)
+      : content(x.content), code(x.code), message(x.message), data(x.data) {}
 
   XSocketResponse(std::vector<Json::Value> content_) : content(content_) {
     this->parse();
@@ -367,18 +378,15 @@ class XSocket;
 template <class T>
 class XSocketCallingMessage {
  public:
-  XSocketResponse<T>* response = NULL;
+  XSocketResponse<T> response;
   // 缓冲区指针
   XSocket<T>* data = NULL;
   int code = 0;
   XSocketCallingMessage(int code_, XSocket<T>* data_,
-                        XSocketResponse<T>* response_)
+                        XSocketResponse<T> response_)
       : data(data_), code(code_), response(response_) {}
   XSocketCallingMessage(int code_, XSocket<T>* data_)
       : data(data_), code(code_) {}
-  ~XSocketCallingMessage() {
-    if (this->response) delete this->response;
-  }
 };
 
 /*
@@ -390,28 +398,11 @@ class XEvents {
  public:
   // 缓冲区指针
   XSocket<T>* data;
-  // 执行线程指针组
-  std::vector<std::thread*> threads_gc;
-  // 执行线程指针组的操作锁
-  std::mutex lock_gc;
   XEvents(XSocket<T>* data_) : data(data_) {}
-  ~XEvents() {
-    // 取消附加所有线程，防止被淦
-    this->lock_gc.lock();
-    for (std::thread* t : this->threads_gc) {
-      if (!t) continue;
-      try {
-        t->detach();
-      } catch (std::invalid_argument e) {
-        LOG(WARNING) << "~XEvents: " << e.what();
-      }
-    }
-    this->lock_gc.unlock();
-  }
   // 记录函数指针，注意要强制转换调用。
   std::map<std::string, std::vector<void*>> callers;
   void listener_add(std::string name,
-                    void (*listener)(XSocketCallingMessage<T>*)) {
+                    void (*listener)(XSocketCallingMessage<T>)) {
     if (!listener) return;
     if (!this->is_hooked(name)) this->callers[name] = std::vector<void*>();
     this->callers[name].push_back((void*)listener);
@@ -420,7 +411,7 @@ class XEvents {
     return this->callers.find(on) != this->callers.end();
   }
   void listener_remove(std::string name,
-                       void (*listener)(XSocketCallingMessage<T>*)) {
+                       void (*listener)(XSocketCallingMessage<T>)) {
     if (!listener) return;
     if (!this->is_hooked(name)) return;
     auto ptr = std::find(this->callers[name].begin(), this->callers[name].end(),
@@ -428,44 +419,22 @@ class XEvents {
     if (ptr == this->callers[name].end()) return;
     this->callers[name].erase(ptr);
   }
-  static void gc(std::vector<std::thread*> ths,
-                 XSocketCallingMessage<T>* message, XEvents<T>* self) {
-    for (std::thread* t : ths) t->join();
-    // 所有对应线程执行完成之后，清理内存
-    for (std::thread* t : ths) delete t;
-    self->lock_gc.lock();
-    std::vector<std::vector<std::thread*>::iterator> to_remove;
-    for (std::vector<std::thread*>::iterator t = self->threads_gc.begin();
-         t != self->threads_gc.end(); t++)
-      if (!(!(*t)) && ((*t)->get_id() == std::this_thread::get_id()))
-        to_remove.emplace_back(t);
-    for (std::vector<std::thread*>::iterator t : to_remove)
-      self->threads_gc.erase(t);
-    self->lock_gc.unlock();
-    delete message;
-  }
-  void call(std::string name, XSocketCallingMessage<T>* message) {
+  void call(std::string name, XSocketCallingMessage<T> message) {
     if (this->callers.find(name) == this->callers.end()) return;
-    std::vector<std::thread*> ths;
     for (auto ptr : this->callers[name]) {
-      // 启动线程，然后...启动一个垃圾回收线程。
-      ths.emplace_back(
-          new std::thread((void (*)(XSocketCallingMessage<T>*))ptr, message));
+      // 启动线程，然后分离
+      std::thread((void (*)(XSocketCallingMessage<T>))ptr, message).detach();
     }
-    // 分离垃圾回收线程
-    std::thread* t_gc = new std::thread(gc, ths, message, this);
-    t_gc->detach();
-    this->threads_gc.emplace_back(t_gc);
   }
   // 空消息
   void call(std::string name, int code = 0) {
-    this->call(name, new XSocketCallingMessage<T>(code, this->data));
+    this->call(name, XSocketCallingMessage<T>(code, this->data));
   }
   // 单条response消息
   void call(std::string name, T d, int code = 0) {
     std::vector<T> v = {d};
-    XSocketCallingMessage<T>* msg = new XSocketCallingMessage<T>(
-        code, this->data, new XSocketResponse<T>(v));
+    XSocketCallingMessage<T> msg =
+        XSocketCallingMessage<T>(code, this->data, XSocketResponse<T>(v));
     this->call(name, msg);
   }
 };

@@ -30,9 +30,9 @@ void on_init(const char *cmd) {
   google::InitGoogleLogging(cmd);
 }
 
-void onmessage(XSocketCallingMessage<std::string> *msg) {
-  std::string str = msg->response->data;
-  LOG(INFO) << "[" << msg->data << "](" << msg->code << ")" << str;
+void onmessage(XSocketCallingMessage<std::string> msg) {
+  std::string str = msg.response.data;
+  LOG(INFO) << "[" << msg.data << "](" << msg.code << ")" << str;
 }
 
 void looper_server(unsigned int utime,
@@ -98,7 +98,7 @@ int client_sender(XSocketClientP2P<std::string> *self) {
   return 0;
 }
 
-void onclose(XSocketCallingMessage<std::string> *msg) {
+void onclose(XSocketCallingMessage<std::string> msg) {
   // 再启动
   LOG(INFO) << "XEvent: onclose";
   LOG(INFO) << "Client: starting new...";

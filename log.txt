@@ -1,78 +1,173 @@
-I20210106 10:25:59.085124  5969 main.cpp:66] Hey my friend! Wish you happy to use XSocket!
-I20210106 10:25:59.085680  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
-I20210106 10:25:59.085736  5969 xsocket.h:165] Address: binding 0.0.0.0:6872(0)
-I20210106 10:25:59.085752  5969 xsocket.h:174] Address: start listening
-I20210106 10:25:59.085965  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
-I20210106 10:25:59.086231  5970 xsocket.h:179] Address: accepting
-I20210106 10:25:59.087486  5971 xsocket.h:191] Address: connected
-I20210106 10:25:59.098601  5975 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.098645  5974 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.098809  5978 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.099465  5980 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.099479  5981 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.099789  5984 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.099864  5985 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.100015  5973 main.cpp:42] Client: I will end this connection!      // 已经发送了10条
-I20210106 10:25:59.100279  5989 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.100358  5988 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.100400  5992 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.100509  5994 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.100548  5995 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.100678  5998 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.100733  6000 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.100858  6002 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.101162  6004 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.101263  6005 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.101388  6008 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.101528  6009 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.101642  6012 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.101840  6013 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.101907  6016 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.102205  6017 main.cpp:17] [0x55678ee8a880](0)Data from Client...   // 这里是Client的最后一条
-I20210106 10:25:59.102349  6020 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-E20210106 10:25:59.102536  5970 xsocket.h:524] [23XSocketExceptionReading] : sock_read_byte // 这里应该是发送结束消息的
-I20210106 10:25:59.103044  6026 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.102614  6022 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.102778  6024 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103077  5970 xsocket.h:153] Address: closing client
-W20210106 10:25:59.103204  5972 main.cpp:49] Server: [23XSocketExceptionWriting] : Error when writing...    // Server在写入错误之后断开
-I20210106 10:25:59.103226  5970 xsocket.h:530] Server connect restarting...
-I20210106 10:25:59.103286  5970 xsocket.h:179] Address: accepting
-I20210106 10:25:59.103318  6028 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103451  6030 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103583  6032 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103744  6034 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103857  6036 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.103996  6038 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104125  6040 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104264  6042 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104403  6044 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104537  6046 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104681  6048 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.104809  6050 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.105037  6052 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!
-I20210106 10:25:59.105306  6054 main.cpp:17] [0x55678ee8af70](0)DATA FROM SERVER!!!   // Server发送的消息让Client一直读取到这里才停止
-E20210106 10:25:59.105361  5971 xsocket.h:587] [23XSocketExceptionReading] : sock_read_byte // 遇到读取错误，重启
-I20210106 10:25:59.105506  5971 xsocket.h:153] Address: closing client
-W20210106 10:25:59.105563  5971 xsocket.h:593] Client restarting...                   // 这时候重启遇到停止指令，监听线程停止运行
-I20210106 10:25:59.107659  5969 xsocket.h:144] Address: closing server
-I20210106 10:25:59.107865  5969 xsocket.h:138] Address: opened 0.0.0.0:6872
-I20210106 10:25:59.108196  6056 xsocket.h:191] Address: connected                     // 主线程重新启动的Client开始发送数据
-I20210106 10:25:59.108743  6058 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.109432  6060 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.109640  6062 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.110092  6064 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.110294  6066 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.110481  6068 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.110657  6057 main.cpp:42] Client: I will end this connection!
-I20210106 10:25:59.110805  6070 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.111120  6072 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-I20210106 10:25:59.111481  6074 main.cpp:17] [0x55678ee8a880](0)Data from Client...
-E20210106 10:25:59.111629  5970 xsocket.h:524] [23XSocketExceptionReading] : sock_read_byte
-I20210106 10:25:59.111784  5970 xsocket.h:153] Address: closing client
-W20210106 10:25:59.111831  5972 main.cpp:49] Server: [23XSocketExceptionWriting] : Error when writing...
-E20210106 10:25:59.111896  6056 xsocket.h:587] [23XSocketExceptionReading] : sock_read_byte
-I20210106 10:25:59.111949  6056 xsocket.h:153] Address: closing client
-I20210106 10:25:59.111899  5970 xsocket.h:530] Server connect restarting...
-W20210106 10:25:59.111981  6056 xsocket.h:593] Client restarting...
-I20210106 10:25:59.111985  5970 xsocket.h:179] Address: accepting
+
+I20210112 22:50:36.972275 12835 main.cpp:121] Hey my friend! Wish you happy to use XSocket!
+I20210112 22:50:36.972692 12835 xsocket.h:144] Address: opened 0.0.0.0:6226
+I20210112 22:50:36.972723 12835 xsocket.h:178] Address: binding 0.0.0.0:6226(0)
+I20210112 22:50:36.972734 12835 xsocket.h:187] Address: start listening
+I20210112 22:50:36.973194 12835 xsocket.h:144] Address: opened 0.0.0.0:6226
+I20210112 22:50:36.973213 12840 xsocket.h:192] Address: accepting
+I20210112 22:50:36.974978 12841 xsocket.h:204] Address: connected
+I20210112 22:50:37.086664 12843 main.cpp:55] looper_client(): count = 10, ret = 0
+I20210112 22:50:37.087659 12844 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...1
+I20210112 22:50:37.187147 12843 main.cpp:55] looper_client(): count = 9, ret = 0
+I20210112 22:50:37.187872 12846 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...2
+I20210112 22:50:37.287691 12843 main.cpp:55] looper_client(): count = 8, ret = 0
+I20210112 22:50:37.288470 12847 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...3
+I20210112 22:50:37.388228 12843 main.cpp:55] looper_client(): count = 7, ret = 0
+I20210112 22:50:37.389031 12848 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...4
+I20210112 22:50:37.487707 12849 main.cpp:35] [0x5555556a9f10](0)DATA FROM SERVER!!!1
+I20210112 22:50:37.488557 12843 main.cpp:55] looper_client(): count = 6, ret = 0
+I20210112 22:50:37.490545 12850 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...5
+I20210112 22:50:37.589100 12843 main.cpp:55] looper_client(): count = 5, ret = 0
+I20210112 22:50:37.590538 12851 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...6
+I20210112 22:50:37.689834 12843 main.cpp:55] looper_client(): count = 4, ret = 0
+I20210112 22:50:37.690728 12852 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...7
+I20210112 22:50:37.790130 12843 main.cpp:55] looper_client(): count = 3, ret = 0
+I20210112 22:50:37.791083 12853 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...8
+I20210112 22:50:37.890693 12843 main.cpp:55] looper_client(): count = 2, ret = 0
+I20210112 22:50:37.891502 12854 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...9
+I20210112 22:50:37.987123 12855 main.cpp:35] [0x5555556a9f10](0)DATA FROM SERVER!!!2
+I20210112 22:50:37.990962 12843 main.cpp:55] looper_client(): count = 1, ret = 0
+I20210112 22:50:37.991138 12843 main.cpp:60] Client: I will end this connection!
+I20210112 22:50:37.991148 12843 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:37.991178 12843 xsocket.h:278] waiting exit...
+I20210112 22:50:37.991727 12856 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...10
+W20210112 22:50:38.487388 12840 xsocket.h:604] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:38.487958 12840 xsocket.h:607] ServerLoop: sending exit code!
+I20210112 22:50:38.488010 12840 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:38.488184 12840 xsocket.h:166] Address: closing client
+I20210112 22:50:38.488175 12857 main.cpp:103] XEvent: onclose
+I20210112 22:50:38.488341 12857 main.cpp:104] Client: starting new...
+I20210112 22:50:38.488175 12858 main.cpp:35] [0x5555556a9f10](0)ATA FROM SERVER!!!3
+I20210112 22:50:38.488389 12840 xsocket.h:617] Server connect restarting...
+I20210112 22:50:38.488447 12840 xsocket.h:192] Address: accepting
+W20210112 22:50:38.489200 12841 xsocket.h:678] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:38.489383 12841 xsocket.h:166] Address: closing client
+I20210112 22:50:38.489241 12859 main.cpp:103] XEvent: onclose
+W20210112 22:50:38.489490 12841 xsocket.h:687] Client restarting...
+W20210112 22:50:38.489593 12841 xsocket.h:689] Client listening thread exiting...
+I20210112 22:50:38.489542 12859 main.cpp:104] Client: starting new...
+I20210112 22:50:38.538491 12857 xsocket.h:155] Address: closing server
+I20210112 22:50:38.538601 12857 xsocket.h:144] Address: opened 0.0.0.0:6226
+I20210112 22:50:38.539592 12857 main.cpp:107] Client: restarted!
+I20210112 22:50:38.539759 12859 xsocket.h:166] Address: closing client
+I20210112 22:50:38.539772 12860 xsocket.h:204] Address: connected
+I20210112 22:50:38.539963 12859 xsocket.h:144] Address: opened 0.0.0.0:6226
+W20210112 22:50:38.540046 12840 xsocket.h:604] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:38.540184 12840 xsocket.h:607] ServerLoop: sending exit code!
+I20210112 22:50:38.540207 12840 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:38.540346 12840 xsocket.h:166] Address: closing client
+I20210112 22:50:38.540392 12840 xsocket.h:617] Server connect restarting...
+I20210112 22:50:38.540410 12840 xsocket.h:192] Address: accepting
+I20210112 22:50:38.541281 12859 main.cpp:107] Client: restarted!
+I20210112 22:50:38.541643 12862 xsocket.h:204] Address: connected
+I20210112 22:50:38.640946 12861 main.cpp:55] looper_client(): count = 10, ret = 0
+I20210112 22:50:38.642418 12863 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...11
+I20210112 22:50:38.741816 12861 main.cpp:55] looper_client(): count = 9, ret = 0
+I20210112 22:50:38.742820 12865 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...12
+I20210112 22:50:38.842222 12861 main.cpp:55] looper_client(): count = 8, ret = 0
+I20210112 22:50:38.843134 12866 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...13
+I20210112 22:50:38.942564 12861 main.cpp:55] looper_client(): count = 7, ret = 0
+I20210112 22:50:38.943450 12867 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...14
+I20210112 22:50:38.988934 12868 main.cpp:35] [0x5555556a9f10](0)DATA FROM SERVER!!!4
+I20210112 22:50:39.043339 12861 main.cpp:55] looper_client(): count = 6, ret = 0
+I20210112 22:50:39.044279 12869 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...15
+I20210112 22:50:39.143683 12861 main.cpp:55] looper_client(): count = 5, ret = 0
+I20210112 22:50:39.145673 12870 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...16
+I20210112 22:50:39.244181 12861 main.cpp:55] looper_client(): count = 4, ret = 0
+I20210112 22:50:39.245312 12871 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...17
+I20210112 22:50:39.344653 12861 main.cpp:55] looper_client(): count = 3, ret = 0
+I20210112 22:50:39.346287 12872 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...18
+I20210112 22:50:39.445180 12861 main.cpp:55] looper_client(): count = 2, ret = 0
+I20210112 22:50:39.447265 12873 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...19
+I20210112 22:50:39.489756 12874 main.cpp:35] [0x5555556a9f10](0)DATA FROM SERVER!!!5
+I20210112 22:50:39.545925 12861 main.cpp:55] looper_client(): count = 1, ret = 0
+I20210112 22:50:39.546242 12861 main.cpp:60] Client: I will end this connection!
+I20210112 22:50:39.546267 12861 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:39.546308 12861 xsocket.h:278] waiting exit...
+I20210112 22:50:39.547385 12875 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...20
+W20210112 22:50:39.988483 12840 xsocket.h:604] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:39.988596 12840 xsocket.h:607] ServerLoop: sending exit code!
+I20210112 22:50:39.988608 12840 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:39.988679 12840 xsocket.h:166] Address: closing client
+I20210112 22:50:39.988734 12840 xsocket.h:617] Server connect restarting...
+I20210112 22:50:39.988745 12840 xsocket.h:192] Address: accepting
+I20210112 22:50:39.989096 12876 main.cpp:103] XEvent: onclose
+I20210112 22:50:39.989102 12877 main.cpp:35] [0x5555556a9f10](0)ATA FROM SERVER!!!6
+I20210112 22:50:39.989161 12876 main.cpp:104] Client: starting new...
+I20210112 22:50:39.989861 12878 main.cpp:103] XEvent: onclose
+I20210112 22:50:39.989953 12878 main.cpp:104] Client: starting new...
+W20210112 22:50:39.989861 12862 xsocket.h:678] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:39.990156 12862 xsocket.h:166] Address: closing client
+W20210112 22:50:39.990231 12862 xsocket.h:687] Client restarting...
+W20210112 22:50:39.990267 12862 xsocket.h:689] Client listening thread exiting...
+I20210112 22:50:40.039326 12876 xsocket.h:155] Address: closing server
+I20210112 22:50:40.039403 12876 xsocket.h:144] Address: opened 0.0.0.0:6226
+I20210112 22:50:40.039988 12876 main.cpp:107] Client: restarted!
+I20210112 22:50:40.040067 12878 xsocket.h:166] Address: closing client
+I20210112 22:50:40.040158 12878 xsocket.h:144] Address: opened 0.0.0.0:6226
+I20210112 22:50:40.040251 12880 xsocket.h:204] Address: connected
+W20210112 22:50:40.040287 12840 xsocket.h:604] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:40.040374 12840 xsocket.h:607] ServerLoop: sending exit code!
+I20210112 22:50:40.040386 12840 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:40.040484 12840 xsocket.h:166] Address: closing client
+I20210112 22:50:40.040516 12840 xsocket.h:617] Server connect restarting...
+I20210112 22:50:40.040527 12840 xsocket.h:192] Address: accepting
+I20210112 22:50:40.042002 12878 main.cpp:107] Client: restarted!
+I20210112 22:50:40.042105 12881 xsocket.h:204] Address: connected
+I20210112 22:50:40.091171 12879 main.cpp:55] looper_client(): count = 10, ret = 0
+I20210112 22:50:40.092051 12882 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...21
+I20210112 22:50:40.191581 12879 main.cpp:55] looper_client(): count = 9, ret = 0
+I20210112 22:50:40.192306 12883 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...22
+I20210112 22:50:40.291879 12879 main.cpp:55] looper_client(): count = 8, ret = 0
+I20210112 22:50:40.292781 12884 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...23
+I20210112 22:50:40.392204 12879 main.cpp:55] looper_client(): count = 7, ret = 0
+I20210112 22:50:40.392969 12885 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...24
+I20210112 22:50:40.492451 12879 main.cpp:55] looper_client(): count = 6, ret = 0
+I20210112 22:50:40.493166 12886 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...25
+I20210112 22:50:40.592733 12879 main.cpp:55] looper_client(): count = 5, ret = 0
+I20210112 22:50:40.593605 12887 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...26
+I20210112 22:50:40.692986 12879 main.cpp:55] looper_client(): count = 4, ret = 0
+I20210112 22:50:40.693796 12888 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...27
+I20210112 22:50:40.793292 12879 main.cpp:55] looper_client(): count = 3, ret = 0
+I20210112 22:50:40.794324 12889 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...28
+I20210112 22:50:40.893589 12879 main.cpp:55] looper_client(): count = 2, ret = 0
+I20210112 22:50:40.894415 12890 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...29
+I20210112 22:50:40.993839 12879 main.cpp:55] looper_client(): count = 1, ret = 0
+I20210112 22:50:40.994020 12879 main.cpp:60] Client: I will end this connection!
+I20210112 22:50:40.994030 12879 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:40.994055 12879 xsocket.h:278] waiting exit...
+I20210112 22:50:40.994884 12891 main.cpp:35] [0x5555556a9ca0](0)        Data from Client...30
+W20210112 22:50:41.489881 12840 xsocket.h:604] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:41.489998 12840 xsocket.h:607] ServerLoop: sending exit code!
+I20210112 22:50:41.490010 12840 xsocket.h:272] AddrSock: sending exit code!
+I20210112 22:50:41.490061 12840 xsocket.h:166] Address: closing client
+I20210112 22:50:41.490149 12840 xsocket.h:617] Server connect restarting...
+I20210112 22:50:41.490172 12840 xsocket.h:192] Address: accepting
+W20210112 22:50:41.490217 12881 xsocket.h:678] [35XSocketExceptionConnectionWillClose] : shuting down now!
+I20210112 22:50:41.490353 12881 xsocket.h:166] Address: closing client
+W20210112 22:50:41.490404 12881 xsocket.h:687] Client restarting...
+W20210112 22:50:41.490453 12881 xsocket.h:689] Client listening thread exiting...
+I20210112 22:50:41.590919 12892 main.cpp:55] looper_client(): count = 10, ret = 2
+I20210112 22:50:41.590955 12893 main.cpp:55] looper_client(): count = 10, ret = 2
+I20210112 22:50:41.691172 12892 main.cpp:55] looper_client(): count = 9, ret = 2
+I20210112 22:50:41.691388 12893 main.cpp:55] looper_client(): count = 9, ret = 2
+I20210112 22:50:41.791375 12892 main.cpp:55] looper_client(): count = 8, ret = 2
+I20210112 22:50:41.791803 12893 main.cpp:55] looper_client(): count = 8, ret = 2
+I20210112 22:50:41.891775 12892 main.cpp:55] looper_client(): count = 7, ret = 2
+I20210112 22:50:41.892045 12893 main.cpp:55] looper_client(): count = 7, ret = 2
+I20210112 22:50:41.992054 12892 main.cpp:55] looper_client(): count = 6, ret = 2
+I20210112 22:50:41.992511 12893 main.cpp:55] looper_client(): count = 6, ret = 2
+I20210112 22:50:42.092660 12892 main.cpp:55] looper_client(): count = 5, ret = 2
+I20210112 22:50:42.092769 12893 main.cpp:55] looper_client(): count = 5, ret = 2
+I20210112 22:50:42.192989 12892 main.cpp:55] looper_client(): count = 4, ret = 2
+I20210112 22:50:42.193194 12893 main.cpp:55] looper_client(): count = 4, ret = 2
+I20210112 22:50:42.293608 12892 main.cpp:55] looper_client(): count = 3, ret = 2
+I20210112 22:50:42.293608 12893 main.cpp:55] looper_client(): count = 3, ret = 2
+I20210112 22:50:42.394023 12892 main.cpp:55] looper_client(): count = 2, ret = 2
+I20210112 22:50:42.394094 12893 main.cpp:55] looper_client(): count = 2, ret = 2
+I20210112 22:50:42.494302 12892 main.cpp:55] looper_client(): count = 1, ret = 2
+I20210112 22:50:42.494449 12892 main.cpp:60] Client: I will end this connection!
+W20210112 22:50:42.494463 12892 xsocket.h:533] unexcepted stop()!
+I20210112 22:50:42.494439 12893 main.cpp:55] looper_client(): count = 1, ret = 2
+I20210112 22:50:42.494670 12893 main.cpp:60] Client: I will end this connection!
+W20210112 22:50:42.494701 12893 xsocket.h:533] unexcepted stop()!
